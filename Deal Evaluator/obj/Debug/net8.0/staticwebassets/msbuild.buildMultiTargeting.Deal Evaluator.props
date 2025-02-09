@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="../build/Deal Evaluator.props" />
+</Project>

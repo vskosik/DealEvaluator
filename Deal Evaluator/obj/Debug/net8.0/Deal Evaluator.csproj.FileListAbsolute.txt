@@ -1,0 +1,30 @@
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/bin/Debug/net8.0/appsettings.Development.json
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/bin/Debug/net8.0/appsettings.json
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/bin/Debug/net8.0/Deal Evaluator.staticwebassets.runtime.json
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/bin/Debug/net8.0/Deal Evaluator
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/bin/Debug/net8.0/Deal Evaluator.deps.json
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/bin/Debug/net8.0/Deal Evaluator.runtimeconfig.json
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/bin/Debug/net8.0/Deal Evaluator.dll
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/bin/Debug/net8.0/Deal Evaluator.pdb
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/obj/Debug/net8.0/Deal Evaluator.GeneratedMSBuildEditorConfig.editorconfig
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/obj/Debug/net8.0/Deal Evaluator.AssemblyInfoInputs.cache
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/obj/Debug/net8.0/Deal Evaluator.AssemblyInfo.cs
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/obj/Debug/net8.0/Deal Evaluator.csproj.CoreCompileInputs.cache
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/obj/Debug/net8.0/Deal Evaluator.MvcApplicationPartsAssemblyInfo.cache
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/obj/Debug/net8.0/Deal Evaluator.RazorAssemblyInfo.cache
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/obj/Debug/net8.0/Deal Evaluator.RazorAssemblyInfo.cs
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/obj/Debug/net8.0/staticwebassets.build.json
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/obj/Debug/net8.0/staticwebassets.development.json
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/obj/Debug/net8.0/staticwebassets/msbuild.Deal Evaluator.Microsoft.AspNetCore.StaticWebAssets.props
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/obj/Debug/net8.0/staticwebassets/msbuild.build.Deal Evaluator.props
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/obj/Debug/net8.0/staticwebassets/msbuild.buildMultiTargeting.Deal Evaluator.props
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/obj/Debug/net8.0/staticwebassets/msbuild.buildTransitive.Deal Evaluator.props
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/obj/Debug/net8.0/staticwebassets.pack.json
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/obj/Debug/net8.0/scopedcss/Views/Shared/_Layout.cshtml.rz.scp.css
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/obj/Debug/net8.0/scopedcss/bundle/Deal Evaluator.styles.css
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/obj/Debug/net8.0/scopedcss/projectbundle/Deal Evaluator.bundle.scp.css
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/obj/Debug/net8.0/Deal Evaluator.dll
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/obj/Debug/net8.0/refint/Deal Evaluator.dll
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/obj/Debug/net8.0/Deal Evaluator.pdb
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/obj/Debug/net8.0/Deal Evaluator.genruntimeconfig.cache
+/Users/vskosik/RiderProjects/Deal Evaluator/Deal Evaluator/obj/Debug/net8.0/ref/Deal Evaluator.dll
