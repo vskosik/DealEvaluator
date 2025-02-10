@@ -1,3 +1,8 @@
+using Deal_Evaluator.Data;
+using Deal_Evaluator.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+
 namespace Deal_Evaluator;
 
 public class Program
@@ -8,6 +13,18 @@ public class Program
 
         // Add services to the container.
         builder.Services.AddControllersWithViews();
+        
+        // Get connection string
+        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+        
+        // Connect DB to the container
+        builder.Services.AddDbContext<DealEvaluatorContext>(options =>
+            options.UseSqlServer(connectionString));
+
+        
+        builder.Services.AddIdentity<User, IdentityRole>()
+            .AddEntityFrameworkStores<DealEvaluatorContext>()
+            .AddDefaultTokenProviders();
 
         var app = builder.Build();
 

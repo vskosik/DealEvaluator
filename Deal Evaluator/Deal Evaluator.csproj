@@ -7,4 +7,30 @@
         <RootNamespace>Deal_Evaluator</RootNamespace>
     </PropertyGroup>
 
+    <ItemGroup>
+      <PackageReference Include="AutoMapper" Version="13.0.1" />
+      <PackageReference Include="bootstrap" Version="5.3.3" />
+      <PackageReference Include="FluentValidation" Version="11.11.0" />
+      <PackageReference Include="jQuery" Version="3.7.1" />
+      <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.3.0" />
+      <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.12" />
+      <PackageReference Include="Microsoft.AspNetCore.Razor" Version="2.3.0" />
+      <PackageReference Include="Microsoft.AspNetCore.Razor.Runtime" Version="2.3.0" />
+      <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.3.0" />
+      <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="8.0.12" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.1" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.1" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.1">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
+      <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.1" />
+      <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.1" />
+      <PackageReference Include="Moq" Version="4.20.72" />
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+      <PackageReference Include="NLog" Version="5.4.0" />
+      <PackageReference Include="RestSharp" Version="112.1.0" />
+      <PackageReference Include="xunit" Version="2.9.3" />
+    </ItemGroup>
+
 </Project>
