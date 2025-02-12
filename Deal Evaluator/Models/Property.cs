@@ -10,7 +10,7 @@ public class Property
     public int Id { get; set; }
     
     [ForeignKey("UserId")]
-    public int UserId { get; set; }
+    public string UserId { get; set; }
     
     [Required] 
     [MaxLength(255)]
@@ -41,4 +41,9 @@ public class Property
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
     public virtual User User { get; set; }
+    
+    public virtual ICollection<ApiLog> ApiLogs { get; set; }
+    public virtual ICollection<Evaluation> Evaluations { get; set; }
+    public virtual ICollection<MarketData> MarketData { get; set; }
+    public virtual ICollection<Comparable> Comparables { get; set; }
 }

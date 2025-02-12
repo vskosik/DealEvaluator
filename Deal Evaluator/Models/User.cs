@@ -5,6 +5,10 @@ namespace Deal_Evaluator.Models;
 
 public class User : IdentityUser
 {
-    public string FirstName { get; set; }
-    public string LastName { get; set; }
+    [Required]
+    [MaxLength(255)]
+    public string CompanyName { get; set; }
+
+    public virtual ICollection<Property> Properties { get; set; }
+    public virtual ICollection<ApiLog> ApiLogs { get; set; }
 }

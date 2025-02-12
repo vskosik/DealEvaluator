@@ -1,4 +1,5 @@
 using Deal_Evaluator.Data;
+using Deal_Evaluator.Extensions;
 using Deal_Evaluator.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -15,16 +16,18 @@ public class Program
         builder.Services.AddControllersWithViews();
         
         // Get connection string
-        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+        var connectionString = builder.Configuration.GetConnectionString("DealEvaluatorContext");
         
         // Connect DB to the container
         builder.Services.AddDbContext<DealEvaluatorContext>(options =>
             options.UseSqlServer(connectionString));
 
-        
-        builder.Services.AddIdentity<User, IdentityRole>()
+        builder.Services.AddAuthorization();
+        builder.Services.AddAuthentication().AddCookie(IdentityConstants.ApplicationScheme);
+
+        builder.Services.AddIdentityCore<User>()
             .AddEntityFrameworkStores<DealEvaluatorContext>()
-            .AddDefaultTokenProviders();
+            .AddApiEndpoints();
 
         var app = builder.Build();
 
@@ -36,6 +39,10 @@ public class Program
             app.UseHsts();
         }
 
+        app.ApplyMigrations();
+
+        app.MapIdentityApi<User>();
+        
         app.UseHttpsRedirection();
         app.UseStaticFiles();
 

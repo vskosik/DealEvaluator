@@ -10,10 +10,9 @@ public class ApiLog
     public int Id { get; set; }
     
     [ForeignKey("PropertyId")] 
-    public int PropertyId { get; set; }
-    [Required]
+    public int? PropertyId { get; set; }
     [ForeignKey("UserId")]
-    public int UserId { get; set; }
+    public string? UserId { get; set; }
     
     [Required] 
     [MaxLength(255)]
