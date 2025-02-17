@@ -8,18 +8,24 @@ public class ZillowApiService
     private readonly HttpClient _httpClient;
     private readonly string _apiKey;
     private readonly string _baseUrl;
+    private readonly string _rapidApiHost;
+    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
     public ZillowApiService(HttpClient httpClient, IConfiguration configuration)
     {
         _httpClient = httpClient;
-        //_apiKey = configuration["ZILLOW_API_KEY"];
-        _apiKey = Environment.GetEnvironmentVariable("RAPID_API_KEY");
-        _httpClient.DefaultRequestHeaders.Add("x-rapidapi-key", _apiKey);
-        _httpClient.DefaultRequestHeaders.Add("x-rapidapi-host", "zillow-com1.p.rapidapi.com");
-        _baseUrl = configuration["BaseURL"]; // TODO: Configure real base url
+        
+        //_apiKey = configuration["RapidApiKey"];
+        _apiKey = Environment.GetEnvironmentVariable("RAPID_API_KEY") 
+                  ?? throw new InvalidOperationException("RAPID_API_KEY is missing from environment variables");
+
+        _rapidApiHost = configuration["ZillowRapidApiHost"] 
+                         ?? throw new InvalidOperationException("ZillowRapidApiHost is missing in configuration");
+        
+        _baseUrl = "https://" + _rapidApiHost;
     }
 
-    public async Task<ZillowSearchResponse> SearchPropertiesAsync(ZillowSearchRequest request)
+    public async Task<string> SearchPropertiesAsync(ZillowSearchRequest request)
     {
         var queryParams = new List<string>
         {
@@ -50,11 +56,17 @@ public class ZillowApiService
         
         var url  = $"{_baseUrl}/propertyExtendedSearch?{string.Join("&", queryParams)}";
         
-        var response = await _httpClient.GetAsync(url);
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Get, url);
+        httpRequest.Headers.Add("x-rapidapi-key", _apiKey);
+        httpRequest.Headers.Add("x-rapidapi-host", _rapidApiHost);
+        
+        var response = await _httpClient.SendAsync(httpRequest);
         response.EnsureSuccessStatusCode();
         
         var json = await response.Content.ReadAsStringAsync();
         
-        return JsonSerializer.Deserialize<ZillowSearchResponse>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        return json;
+        // TODO: Fix Json Deserialization for ZillowSearchResponse
+        // return JsonSerializer.Deserialize<ZillowSearchResponse>(json, JsonOptions)!;
     }
 }

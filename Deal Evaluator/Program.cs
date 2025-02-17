@@ -1,3 +1,4 @@
+using Deal_Evaluator.API;
 using Deal_Evaluator.Data;
 using Deal_Evaluator.Extensions;
 using Deal_Evaluator.Models;
@@ -12,7 +13,7 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        // Add services to the container.
+        // Add controllers and views
         builder.Services.AddControllersWithViews();
         
         // Get connection string
@@ -35,6 +36,9 @@ public class Program
         // Swagger Services
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
+
+        builder.Services.AddHttpClient<ZillowApiService>();
+        builder.Services.AddScoped<ZillowApiService>();
 
         var app = builder.Build();
 
