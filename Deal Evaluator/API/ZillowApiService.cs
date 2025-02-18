@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Deal_Evaluator.DTOs.Zillow;
 
 namespace Deal_Evaluator.API;
@@ -9,7 +10,13 @@ public class ZillowApiService
     private readonly string _apiKey;
     private readonly string _baseUrl;
     private readonly string _rapidApiHost;
-    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        IgnoreReadOnlyProperties = true,
+        AllowTrailingCommas = true
+    };
 
     public ZillowApiService(HttpClient httpClient, IConfiguration configuration)
     {
@@ -25,7 +32,7 @@ public class ZillowApiService
         _baseUrl = "https://" + _rapidApiHost;
     }
 
-    public async Task<string> SearchPropertiesAsync(ZillowSearchRequest request)
+    public async Task<ZillowSearchResponse> SearchPropertiesAsync(ZillowSearchRequest request)
     {
         var queryParams = new List<string>
         {
@@ -65,8 +72,6 @@ public class ZillowApiService
         
         var json = await response.Content.ReadAsStringAsync();
         
-        return json;
-        // TODO: Fix Json Deserialization for ZillowSearchResponse
-        // return JsonSerializer.Deserialize<ZillowSearchResponse>(json, JsonOptions)!;
+        return JsonSerializer.Deserialize<ZillowSearchResponse>(json, JsonOptions)!;
     }
 }
