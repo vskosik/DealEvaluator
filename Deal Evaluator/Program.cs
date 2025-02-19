@@ -9,12 +9,13 @@ namespace Deal_Evaluator;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
         // Add controllers and views
         builder.Services.AddControllersWithViews();
+        builder.Services.AddRazorPages();
         
         // Get connection string
         var connectionString = builder.Configuration.GetConnectionString("DealEvaluatorContext");
@@ -23,15 +24,20 @@ public class Program
         builder.Services.AddDbContext<DealEvaluatorContext>(options =>
             options.UseSqlServer(connectionString));
 
-        // Config Auth Services
-        builder.Services.AddAuthorization();
-        builder.Services.AddAuthentication().AddCookie(IdentityConstants.ApplicationScheme)
-            .AddBearerToken(IdentityConstants.BearerScheme);
-
         // Config ASP.NET Identity
-        builder.Services.AddIdentityCore<User>()
+        builder.Services.AddIdentity<User, IdentityRole>()
             .AddEntityFrameworkStores<DealEvaluatorContext>()
             .AddApiEndpoints();
+
+        // Config Auth Services
+        builder.Services.AddAuthentication()
+            .AddCookie(options =>
+            {
+                options.LoginPath = "/Account/Login";
+                options.ExpireTimeSpan = TimeSpan.FromDays(7);
+            }); 
+        
+        builder.Services.AddAuthorization();
         
         // Swagger Services
         builder.Services.AddEndpointsApiExplorer();
@@ -58,11 +64,14 @@ public class Program
         // app.ApplyMigrations();
         
         // Seeding DB with test data
-        /*using (var scope = app.Services.CreateScope())
+        using (var scope = app.Services.CreateScope())
         {
             var context = scope.ServiceProvider.GetRequiredService<DealEvaluatorContext>();
-            SeedDatabase(context);
-        }*/
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            
+            await SeedDatabase(context, userManager, roleManager);
+        }
 
         app.MapIdentityApi<User>();
         
@@ -71,6 +80,7 @@ public class Program
 
         app.UseRouting();
 
+        app.UseAuthentication();
         app.UseAuthorization();
 
         app.MapControllerRoute(
@@ -80,57 +90,31 @@ public class Program
         app.Run();
     }
 
-    public static void SeedDatabase(DealEvaluatorContext context)
+    private static async Task SeedDatabase(DealEvaluatorContext context, UserManager<User> userManager,
+        RoleManager<IdentityRole> roleManager)
     {
-        context.Database.EnsureCreated();
+        await context.Database.EnsureCreatedAsync();
+
+        if (!roleManager.Roles.Any())
+        {
+            var roles = new [] { "Admin", "User" };
+
+            foreach (var role in roles)
+            {
+                await roleManager.CreateAsync(new IdentityRole(role));
+            }
+        }
 
         if (!context.Users.Any())
         {
-            var userList = new List<User>
-            {
-                new User
-                {
-                    UserName = "john.doe@example.com",
-                    Email = "john.doe@example.com",
-                    CompanyName = "Doe Real Estate",
-                    NormalizedUserName = "JOHN.DOE@EXAMPLE.COM",
-                    NormalizedEmail = "JOHN.DOE@EXAMPLE.COM",
-                    EmailConfirmed = true,
-                    SecurityStamp = Guid.NewGuid().ToString(),
-                    ConcurrencyStamp = Guid.NewGuid().ToString()
-                },
-                new User
-                {
-                    UserName = "jane.smith@example.com",
-                    Email = "jane.smith@example.com",
-                    CompanyName = "Smith Investment Group",
-                    NormalizedUserName = "JANE.SMITH@EXAMPLE.COM",
-                    NormalizedEmail = "JANE.SMITH@EXAMPLE.COM",
-                    EmailConfirmed = true,
-                    SecurityStamp = Guid.NewGuid().ToString(),
-                    ConcurrencyStamp = Guid.NewGuid().ToString()
-                },
-                new User
-                {
-                    UserName = "michael.johnson@example.com",
-                    Email = "michael.johnson@example.com",
-                    CompanyName = "Johnson Home Solutions",
-                    NormalizedUserName = "MICHAEL.JOHNSON@EXAMPLE.COM",
-                    NormalizedEmail = "MICHAEL.JOHNSON@EXAMPLE.COM",
-                    EmailConfirmed = true,
-                    SecurityStamp = Guid.NewGuid().ToString(),
-                    ConcurrencyStamp = Guid.NewGuid().ToString()
-                }
-            };
+            var userAdmin = new User { UserName = "admin@admin.com", Email = "Admin@admin.com", CompanyName = "AdminCompany" };
+            var userUser = new User { UserName = "user@user.com", Email = "user@user.com", CompanyName = "UserCompany"};
+
+            await userManager.CreateAsync(userAdmin, "Admin123!");
+            await userManager.AddToRoleAsync(userAdmin, "Admin");
             
-            
-            var pwHasher = new PasswordHasher<User>();
-            
-            userList[0].PasswordHash = pwHasher.HashPassword(userList[0], "Admin123");
-            userList[1].PasswordHash = pwHasher.HashPassword(userList[1], "User1234");
-            userList[2].PasswordHash = pwHasher.HashPassword(userList[2], "Guest123");
-            
-            context.Users.AddRange(userList);
+            await userManager.CreateAsync(userUser, "User123!");
+            await userManager.AddToRoleAsync(userUser, "User");
         }
 
         if (!context.Properties.Any())
@@ -139,7 +123,7 @@ public class Program
             {
                 new Property
                 {
-                    UserId = "7a74698d-3cff-49f7-85ae-987f4828d907",
+                    UserId = "5b377fd9-e9ed-4608-9bd2-b6ec6058f077",
                     Address = "123 Main St",
                     City = "Los Angeles",
                     State = "CA",
@@ -156,7 +140,7 @@ public class Program
                 },
                 new Property
                 {
-                    UserId = "956502c6-58b8-40db-bd54-4f18f1136ab4",
+                    UserId = "5b377fd9-e9ed-4608-9bd2-b6ec6058f077",
                     Address = "456 Oak St",
                     City = "Los Angeles",
                     State = "CA",
@@ -173,7 +157,7 @@ public class Program
                 },
                 new Property
                 {
-                    UserId = "c4f0185d-13ed-4cbf-aa12-0f31cddf5f98",
+                    UserId = "5b377fd9-e9ed-4608-9bd2-b6ec6058f077",
                     Address = "789 Pine St",
                     City = "San Diego",
                     State = "CA",
@@ -199,21 +183,21 @@ public class Program
             {
                 new MarketData
                 {
-                    PropertyId = 1, // Make sure this property exists in the DB
+                    PropertyId = 1003, // Make sure this property exists in the DB
                     Source = "Zillow",
                     DataJson = "{ \"price\": 250000, \"sqft\": 1500, \"bedrooms\": 3, \"bathrooms\": 2 }",
                     LastUpdated = DateTime.UtcNow
                 },
                 new MarketData
                 {
-                    PropertyId = 1,
+                    PropertyId = 1003,
                     Source = "Redfin",
                     DataJson = "{ \"price\": 255000, \"sqft\": 1550, \"bedrooms\": 3, \"bathrooms\": 2 }",
                     LastUpdated = DateTime.UtcNow
                 },
                 new MarketData
                 {
-                    PropertyId = 2, // Different property
+                    PropertyId = 1004, // Different property
                     Source = "Realtor.com",
                     DataJson = "{ \"price\": 260000, \"sqft\": 1600, \"bedrooms\": 4, \"bathrooms\": 2.5 }",
                     LastUpdated = DateTime.UtcNow
@@ -229,7 +213,7 @@ public class Program
             {
                 new Evaluation
                 {
-                    PropertyId = 1, // Ensure this property exists in the DB
+                    PropertyId = 1003, // Ensure this property exists in the DB
                     Arv = 300000,
                     RepairCost = 50000,
                     PurchasePrice = 220000,
@@ -240,7 +224,7 @@ public class Program
                 },
                 new Evaluation
                 {
-                    PropertyId = 1,
+                    PropertyId = 1003,
                     Arv = 310000,
                     RepairCost = 45000,
                     PurchasePrice = 225000,
@@ -251,7 +235,7 @@ public class Program
                 },
                 new Evaluation
                 {
-                    PropertyId = 2, // Different property
+                    PropertyId = 1005, // Different property
                     Arv = 400000,
                     RepairCost = 60000,
                     PurchasePrice = 300000,
@@ -271,7 +255,7 @@ public class Program
             {
                 new Comparable
                 {
-                    PropertyId = 1, // Ensure this property exists in the DB
+                    PropertyId = 1004, // Ensure this property exists in the DB
                     Address = "123 Main St",
                     City = "Los Angeles",
                     State = "CA",
@@ -288,7 +272,7 @@ public class Program
                 },
                 new Comparable
                 {
-                    PropertyId = 1,
+                    PropertyId = 1005,
                     Address = "456 Oak St",
                     City = "Los Angeles",
                     State = "CA",
@@ -305,7 +289,7 @@ public class Program
                 },
                 new Comparable
                 {
-                    PropertyId = 2, // Different property
+                    PropertyId = 1005, // Different property
                     Address = "789 Pine St",
                     City = "San Diego",
                     State = "CA",
@@ -331,8 +315,8 @@ public class Program
             {
                 new ApiLog
                 {
-                    PropertyId = 1, // Ensure this property exists
-                    UserId = "7a74698d-3cff-49f7-85ae-987f4828d907", // Ensure this user exists
+                    PropertyId = 1003, // Ensure this property exists
+                    UserId = "5b377fd9-e9ed-4608-9bd2-b6ec6058f077", // Ensure this user exists
                     Endpoint = "/api/properties/1",
                     RequestData = "{ \"request\": \"Get property details\" }",
                     ResponseData = "{ \"response\": \"Success\", \"data\": { \"price\": 320000 } }",
@@ -342,8 +326,8 @@ public class Program
                 },
                 new ApiLog
                 {
-                    PropertyId = 2,
-                    UserId = "956502c6-58b8-40db-bd54-4f18f1136ab4",
+                    PropertyId = 1003,
+                    UserId = "5b377fd9-e9ed-4608-9bd2-b6ec6058f077",
                     Endpoint = "/api/properties/2",
                     RequestData = "{ \"request\": \"Get property details\" }",
                     ResponseData = "{ \"response\": \"Success\", \"data\": { \"price\": 310000 } }",
@@ -354,7 +338,7 @@ public class Program
                 new ApiLog
                 {
                     PropertyId = null, // Simulating a request not tied to a property
-                    UserId = "c4f0185d-13ed-4cbf-aa12-0f31cddf5f98",
+                    UserId = "de07f6af-d0bb-45e5-962b-93a08d62d928",
                     Endpoint = "/api/auth/login",
                     RequestData = "{ \"username\": \"testuser\", \"password\": \"****\" }",
                     ResponseData = "{ \"response\": \"Failure\" }",

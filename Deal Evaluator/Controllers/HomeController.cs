@@ -3,6 +3,7 @@ using Deal_Evaluator.API;
 using Deal_Evaluator.DTOs.Zillow;
 using Microsoft.AspNetCore.Mvc;
 using Deal_Evaluator.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Deal_Evaluator.Controllers;
 
