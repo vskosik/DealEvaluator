@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace Deal_Evaluator.Controllers;
 
+[Authorize]
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
@@ -27,12 +28,8 @@ public class HomeController : Controller
     {
         return View();
     }
-
-    /// <summary>
-    /// Searches for properties using Zillow API.
-    /// </summary>
-    /// <param name="request">The search criteria.</param>
-    /// <returns>List of properties matching the criteria.</returns>
+    
+    // TODO Secure action with authorization requirement
     [HttpPost("search")]
     public async Task<ActionResult<ZillowSearchResponse>> SearchProperties([FromBody] ZillowSearchRequest request)
     {

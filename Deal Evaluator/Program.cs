@@ -33,7 +33,9 @@ public class Program
         builder.Services.AddAuthentication()
             .AddCookie(options =>
             {
+                // TODO Figure out why redirects doesn't work as expected
                 options.LoginPath = "/Account/Login";
+                options.AccessDeniedPath = "/Account/Login?error=unauthorized";
                 options.ExpireTimeSpan = TimeSpan.FromDays(7);
             }); 
         

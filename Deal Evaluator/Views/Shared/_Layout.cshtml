@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>@ViewData["Title"] - Deal_Evaluator</title>
+    <title>@ViewData["Title"] - Deal Evaluator</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/Deal_Evaluator.styles.css" asp-append-version="true"/>
@@ -12,7 +12,7 @@
 <header>
     <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
         <div class="container-fluid">
-            <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Deal_Evaluator</a>
+            <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Deal Evaluator</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                     aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -26,7 +26,13 @@
                         <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-controller="User" asp-action="Login">Login</a>
+                        <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Login">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Register">Register</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Logout">Logout</a>
                     </li>
                 </ul>
             </div>
@@ -34,6 +40,26 @@
     </nav>
 </header>
 <div class="container">
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div id="alertMessage" class="alert alert-danger alert-dismissible fade show position-fixed top-0 end-0 m-3" role="alert" style="z-index: 1050;">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <script>
+            // Auto-dismiss the alert after 3 seconds
+            setTimeout(function () {
+                let alert = document.getElementById("alertMessage");
+                if (alert) {
+                    alert.classList.remove("show");
+                    alert.classList.add("fade");
+                    setTimeout(() => alert.remove(), 500);
+                }
+            }, 3000);
+            console.log('Here')
+        </script>
+    }
     <main role="main" class="pb-3">
         @RenderBody()
     </main>
@@ -41,7 +67,7 @@
 
 <footer class="border-top footer text-muted">
     <div class="container">
-        &copy; 2025 - Deal_Evaluator - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+        &copy; 2025 - Deal Evaluator - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
     </div>
 </footer>
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
