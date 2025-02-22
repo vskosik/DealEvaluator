@@ -7,8 +7,10 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/Deal_Evaluator.styles.css" asp-append-version="true"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
 </head>
 <body>
+
 <header>
     <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
         <div class="container-fluid">
@@ -17,6 +19,7 @@
                     aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
+            
             <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                 <ul class="navbar-nav flex-grow-1">
                     <li class="nav-item">
@@ -39,27 +42,8 @@
         </div>
     </nav>
 </header>
-<div class="container">
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div id="alertMessage" class="alert alert-danger alert-dismissible fade show position-fixed top-0 end-0 m-3" role="alert" style="z-index: 1050;">
-            @TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
 
-        <script>
-            // Auto-dismiss the alert after 3 seconds
-            setTimeout(function () {
-                let alert = document.getElementById("alertMessage");
-                if (alert) {
-                    alert.classList.remove("show");
-                    alert.classList.add("fade");
-                    setTimeout(() => alert.remove(), 500);
-                }
-            }, 3000);
-            console.log('Here')
-        </script>
-    }
+<div class="container">
     <main role="main" class="pb-3">
         @RenderBody()
     </main>
@@ -70,9 +54,25 @@
         &copy; 2025 - Deal Evaluator - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
     </div>
 </footer>
+
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
 <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 <script src="~/js/site.js" asp-append-version="true"></script>
 @await RenderSectionAsync("Scripts", required: false)
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+@if (TempData["Notification"] != null)
+{
+    <script>
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": "5000"
+        };
+        toastr['@(TempData["NotificationType"] ?? "info")']('@TempData["Notification"]');
+    </script>
+}
 </body>
 </html>

@@ -2,12 +2,11 @@ using System.Diagnostics;
 using Deal_Evaluator.API;
 using Deal_Evaluator.DTOs.Zillow;
 using Microsoft.AspNetCore.Mvc;
-using Deal_Evaluator.Models;
+using Deal_Evaluator.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 
 namespace Deal_Evaluator.Controllers;
 
-[Authorize]
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
@@ -24,6 +23,7 @@ public class HomeController : Controller
         return View();
     }
 
+    [Authorize]
     public IActionResult Privacy()
     {
         return View();

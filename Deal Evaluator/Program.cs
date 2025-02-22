@@ -17,10 +17,9 @@ public class Program
         builder.Services.AddControllersWithViews();
         builder.Services.AddRazorPages();
         
-        // Get connection string
+        // Config DbContext
         var connectionString = builder.Configuration.GetConnectionString("DealEvaluatorContext");
         
-        // Config DbContext
         builder.Services.AddDbContext<DealEvaluatorContext>(options =>
             options.UseSqlServer(connectionString));
 
@@ -28,37 +27,24 @@ public class Program
         builder.Services.AddIdentity<User, IdentityRole>()
             .AddEntityFrameworkStores<DealEvaluatorContext>()
             .AddApiEndpoints();
-
-        // Config Auth Services
-        builder.Services.AddAuthentication()
-            .AddCookie(options =>
-            {
-                // TODO Figure out why redirects doesn't work as expected
-                options.LoginPath = "/Account/Login";
-                options.AccessDeniedPath = "/Account/Login?error=unauthorized";
-                options.ExpireTimeSpan = TimeSpan.FromDays(7);
-            }); 
         
         builder.Services.AddAuthorization();
         
-        // Swagger Services
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 
+        // DI
         builder.Services.AddHttpClient<ZillowApiService>();
         builder.Services.AddScoped<ZillowApiService>();
 
         var app = builder.Build();
 
-        // Configure the HTTP request pipeline.
         if (!app.Environment.IsDevelopment())
         {
             app.UseExceptionHandler("/Home/Error");
-            // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
             app.UseHsts();
         }
         
-        // Start Swagger
         app.UseSwagger();
         app.UseSwaggerUI();
         
@@ -66,14 +52,14 @@ public class Program
         // app.ApplyMigrations();
         
         // Seeding DB with test data
-        using (var scope = app.Services.CreateScope())
+        /*using (var scope = app.Services.CreateScope())
         {
             var context = scope.ServiceProvider.GetRequiredService<DealEvaluatorContext>();
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
             
             await SeedDatabase(context, userManager, roleManager);
-        }
+        }*/
 
         app.MapIdentityApi<User>();
         
@@ -353,6 +339,6 @@ public class Program
             context.ApiLogs.AddRange(apiLogList);
         }
 
-        context.SaveChanges();
+        await context.SaveChangesAsync();
     }
 }

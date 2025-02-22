@@ -10,10 +10,11 @@ public class RegisterViewModel
     [DataType(DataType.Password)]
     public string Password { get; set; }
     
+    [Compare("Password", ErrorMessage = "Passwords do not match")]
+    public string ConfirmPassword { get; set; }
+    
     [Required]
     public string Name { get; set; }
     
     public string CompanyName { get; set; }
-    
-    // TODO Figure out what user need for registration
 }

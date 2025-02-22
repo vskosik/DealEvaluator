@@ -1,5 +1,6 @@
 using Deal_Evaluator.Models;
 using Deal_Evaluator.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,13 +18,17 @@ public class AccountController : Controller
     }
     
     // GET Account/Login
+    [AllowAnonymous]
     [HttpGet]
-    public IActionResult Login(string? error)
+    public IActionResult Login(string? returnUrl = null)
     {
-        if (error == "unauthorized")
+        if (!string.IsNullOrEmpty(returnUrl))
         {
-            TempData["ErrorMessage"] = "You must be logged in to access that page.";
+            TempData["Notification"] = "Please log in to access this page.";
+            TempData["NotificationType"] = "warning";
         }
+        
+        ViewData["ReturnUrl"] = returnUrl;
         return View();
     }
 
@@ -41,14 +46,18 @@ public class AccountController : Controller
 
         if (user == null)
         {
+            TempData["Notification"] = "User not found!";
+            TempData["NotificationType"] = "warning";
             ModelState.AddModelError(string.Empty, "Invalid login attempt.");
             return View(model);
         }
         
-        var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
+        var result = await _signInManager.PasswordSignInAsync(user, model.Password, model.RememberMe, lockoutOnFailure: false);
 
         if (result.Succeeded)
         {
+            TempData["Notification"] = "Successfully logged in.";
+            TempData["NotificationType"] = "success";
             return RedirectToAction("Index", "Home");
         }
 
@@ -71,9 +80,34 @@ public class AccountController : Controller
     // POST Account/Register
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Register(RegisterViewModel model)
+    public async Task<IActionResult> Register(RegisterViewModel model)
     {
-        // TODO Implement registration logic
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var search = await _userManager.FindByEmailAsync(model.Email);
+        if (search != null)
+        {
+            TempData["Notification"] = "This email address already exists. Please try another one.";
+            TempData["NotificationType"] = "error";
+            ModelState.AddModelError(string.Empty, "Email already exists.");
+            return View(model);
+        }
+        
+        
+        var user = new User { UserName = model.Name, Email = model.Email, CompanyName = model.CompanyName };
+        var result = await _userManager.CreateAsync(user, model.Password);
+
+        if (result.Succeeded)
+        {
+            TempData["Notification"] = "Account created successfully.";
+            TempData["NotificationType"] = "success";
+            return RedirectToAction("Index", "Home");
+        }
+        
+        ModelState.AddModelError(string.Empty, "Invalid register attempt.");
         return View(model);
     }
 }

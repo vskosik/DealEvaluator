@@ -1,4 +1,4 @@
-namespace Deal_Evaluator.Models;
+namespace Deal_Evaluator.ViewModels;
 
 public class ErrorViewModel
 {
