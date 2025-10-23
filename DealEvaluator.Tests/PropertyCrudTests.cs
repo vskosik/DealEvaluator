@@ -1,5 +1,6 @@
-using Deal_Evaluator.Data;
-using Deal_Evaluator.Models;
+using DealEvaluator.Domain.Entities;
+using DealEvaluator.Domain.Enums;
+using DealEvaluator.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 

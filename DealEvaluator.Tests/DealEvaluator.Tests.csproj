@@ -25,7 +25,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Deal Evaluator\Deal Evaluator.csproj" />
+    <ProjectReference Include="..\Deal Evaluator.Web\Deal Evaluator.Web.csproj" />
+    <ProjectReference Include="..\DealEvaluator.Infrastructure\DealEvaluator.Infrastructure.csproj" />
+    <ProjectReference Include="..\DealEvaluator.Web\DealEvaluator.Web.csproj" />
   </ItemGroup>
 
 </Project>

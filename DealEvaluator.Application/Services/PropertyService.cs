@@ -1,0 +1,135 @@
+using AutoMapper;
+using DealEvaluator.Application.DTOs.Property;
+using DealEvaluator.Application.Interfaces;
+using DealEvaluator.Domain.Entities;
+
+namespace DealEvaluator.Application.Services;
+
+/// <summary>
+/// Service layer for property business logic
+/// This is where your evaluation algorithms and business rules live
+/// </summary>
+public class PropertyService : IPropertyService
+{
+    private readonly IPropertyRepository _propertyRepository;
+    private readonly IMapper _mapper;
+
+    public PropertyService(IPropertyRepository propertyRepository, IMapper mapper)
+    {
+        _propertyRepository = propertyRepository;
+        _mapper = mapper;
+    }
+
+    public async Task<PropertyDto> CreatePropertyAsync(CreatePropertyDto dto, string userId)
+    {
+        // Check if property already exists for this user at this address
+        var existingProperty = await _propertyRepository
+            .GetPropertyByAddressAndUserAsync(dto.Address, userId);
+
+        if (existingProperty != null)
+        {
+            // Update existing property with new values
+            _mapper.Map(dto, existingProperty);
+
+            _propertyRepository.Update(existingProperty);
+            await _propertyRepository.SaveChangesAsync();
+
+            return _mapper.Map<PropertyDto>(existingProperty);
+        }
+
+        // Create new property
+        var property = _mapper.Map<Property>(dto);
+        property.UserId = userId;
+        property.CreatedAt = DateTime.UtcNow;
+
+        await _propertyRepository.AddAsync(property);
+        await _propertyRepository.SaveChangesAsync();
+
+        return _mapper.Map<PropertyDto>(property);
+    }
+
+    public async Task<PropertyDto?> GetPropertyByIdAsync(int id)
+    {
+        var property = await _propertyRepository.GetByIdAsync(id);
+        return _mapper.Map<PropertyDto>(property);
+    }
+
+    public async Task<List<PropertyDto>> GetUserPropertiesAsync(string userId)
+    {
+        // TODO: Implement this when you add GetByUserIdAsync to IPropertyRepository
+        var properties = await _propertyRepository.GetPropertiesByUserIdAsync(userId);
+        
+        return _mapper.Map<List<PropertyDto>>(properties);
+    }
+
+    public async Task<PropertyDto> UpdatePropertyAsync(UpdatePropertyDto dto)
+    {
+        // Get existing property
+        var property = await _propertyRepository.GetByIdAsync(dto.Id);
+        if (property == null)
+            throw new KeyNotFoundException($"Property with ID {dto.Id} not found");
+
+        // Map updates to entity
+        _mapper.Map(dto, property);
+
+        // Save changes
+        _propertyRepository.Update(property);
+        await _propertyRepository.SaveChangesAsync();
+
+        return _mapper.Map<PropertyDto>(property);
+    }
+
+    public async Task DeletePropertyAsync(int id)
+    {
+        var property = await _propertyRepository.GetByIdAsync(id);
+        if (property == null)
+            throw new KeyNotFoundException($"Property with ID {id} not found");
+
+        _propertyRepository.Delete(property);
+        await _propertyRepository.SaveChangesAsync();
+    }
+
+    public async Task<object> EvaluatePropertyDealAsync(int propertyId)
+    {
+        // TODO: This is where your core evaluation logic will go
+        // 1. Get the property from database
+        var property = await _propertyRepository.GetByIdAsync(propertyId);
+        if (property == null)
+            throw new KeyNotFoundException($"Property with ID {propertyId} not found");
+
+        // 2. Fetch comparable properties (comps) from your repository or Zillow API
+        // var comps = await _comparableRepository.GetComparablesByLocationAsync(property.ZipCode);
+
+        // 3. Calculate ARV (After Repair Value)
+        // var arv = CalculateARV(property, comps);
+
+        // 4. Estimate repair costs based on condition
+        // var repairCost = EstimateRepairCost(property);
+
+        // 5. Calculate investment metrics:
+        //    - Cap Rate = (Net Operating Income / Property Price) * 100
+        //    - Cash on Cash Return
+        //    - ROI
+        //    - Monthly cash flow
+
+        // 6. Save evaluation to database
+        // var evaluation = new Evaluation { PropertyId = propertyId, Arv = arv, ... };
+        // await _evaluationRepository.AddAsync(evaluation);
+
+        // 7. Return results
+        return new
+        {
+            PropertyId = propertyId,
+            Message = "Evaluation logic not yet implemented - add your formulas here!",
+            // ARV = arv,
+            // RepairCost = repairCost,
+            // CapRate = capRate,
+            // etc...
+        };
+    }
+
+    // Private helper methods for calculations
+    // private decimal CalculateARV(Property property, List<Comparable> comps) { }
+    // private decimal EstimateRepairCost(Property property) { }
+    // private decimal CalculateCapRate(decimal noi, decimal price) { }
+}

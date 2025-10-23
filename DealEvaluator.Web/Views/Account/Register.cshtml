@@ -1,0 +1,47 @@
+@model DealEvaluator.Web.Models.RegisterViewModel
+
+@{
+    ViewBag.Title = "Register";
+    Layout = "_Layout";
+}
+
+<div class="d-flex justify-content-center align-items-center">
+    <div class="card p-4 shadow-lg" style="width: 400px;">
+        <h2 class="text-center mb-4">Register</h2>
+        <form asp-controller="Account" asp-action="Register" method="post" class="form-group mb-3">
+            <div class="form-floating mb-3">
+                <input asp-for="Name" required="required" type="text" class="form-control" id="floatingName" placeholder="John Smith"/>
+                <label for="floatingName">Name</label>
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            
+            <div class="form-floating mb-3">
+                <input asp-for="Email" required="required" type="email" class="form-control" id="floatingEmail" placeholder="name@example.com"/>
+                <label for="floatingEmail">Email</label>
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input asp-for="Password" type="password" required="required" class="form-control" id="floatingPassword" placeholder="Password"/>
+                <label for="floatingPassword">Password</label>
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input asp-for="ConfirmPassword" type="password" required="required" class="form-control" id="floatingConfirmPassword" placeholder="Same Password"/>
+                <label for="floatingConfirmPassword">Confirm Password</label>
+                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input asp-for="CompanyName" type="text" required="required" class="form-control" id="floatingCompanyName" placeholder="Microsoft"/>
+                <label for="floatingCompanyName">Company Name</label>
+                <span asp-validation-for="CompanyName" class="text-danger"></span>
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100">Register</button>
+        </form>
+        
+        <a asp-controller="Account" asp-action="Login" class="link-info text-center">Already have an account?</a>
+    </div>
+</div>
