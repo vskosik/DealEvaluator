@@ -1,0 +1,181 @@
+@model DealEvaluator.Application.DTOs.Property.PropertyDto
+
+@{
+    ViewData["Title"] = "Property Details";
+}
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Property" asp-action="Index">My Properties</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">@Model.Address</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <div>
+                            <h2 class="fw-bold mb-1">@Model.Address</h2>
+                            <p class="text-muted mb-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-geo-alt me-1" viewBox="0 0 16 16" style="vertical-align: text-bottom;">
+                                    <path d="M12.166 8.94c-.524 1.062-1.234 2.12-1.96 3.07A32 32 0 0 1 8 14.58a32 32 0 0 1-2.206-2.57c-.726-.95-1.436-2.008-1.96-3.07C3.304 7.867 3 6.862 3 6a5 5 0 0 1 10 0c0 .862-.305 1.867-.834 2.94M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10"/>
+                                    <path d="M8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4m0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
+                                </svg>
+                                @Model.City, @Model.State @Model.ZipCode
+                            </p>
+                        </div>
+                        <span class="badge bg-primary fs-6">@Model.PropertyType</span>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="row g-4">
+                        @if (Model.Price.HasValue)
+                        {
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="feature-icon bg-primary bg-opacity-10 text-primary rounded-circle p-3 me-3">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-currency-dollar" viewBox="0 0 16 16">
+                                            <path d="M4 10.781c.148 1.667 1.513 2.85 3.591 3.003V15h1.043v-1.216c2.27-.179 3.678-1.438 3.678-3.3 0-1.59-.947-2.51-2.956-3.028l-.722-.187V3.467c1.122.11 1.879.714 2.07 1.616h1.47c-.166-1.6-1.54-2.748-3.54-2.875V1H7.591v1.233c-1.939.23-3.27 1.472-3.27 3.156 0 1.454.966 2.483 2.661 2.917l.61.162v4.031c-1.149-.17-1.94-.8-2.131-1.718zm3.391-3.836c-1.043-.263-1.6-.825-1.6-1.616 0-.944.704-1.641 1.8-1.828v3.495l-.2-.05zm1.591 1.872c1.287.323 1.852.859 1.852 1.769 0 1.097-.826 1.828-2.2 1.939V8.73z"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted small">Purchase Price</div>
+                                        <div class="fs-4 fw-bold">$@Model.Price.Value.ToString("N0")</div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        @if (Model.Sqft.HasValue)
+                        {
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="feature-icon bg-success bg-opacity-10 text-success rounded-circle p-3 me-3">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-rulers" viewBox="0 0 16 16">
+                                            <path d="M1 0a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5v-1H1V1h5V0zm9 0h5a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-5v-1h5V1h-5z"/>
+                                            <path d="M2 1.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5z"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted small">Square Footage</div>
+                                        <div class="fs-4 fw-bold">@Model.Sqft.Value.ToString("N0") sq ft</div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        @if (Model.Bedrooms.HasValue || Model.Bathrooms.HasValue)
+                        {
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="feature-icon bg-info bg-opacity-10 text-info rounded-circle p-3 me-3">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-door-open" viewBox="0 0 16 16">
+                                            <path d="M8.5 10c-.276 0-.5-.448-.5-1s.224-1 .5-1 .5.448.5 1-.224 1-.5 1"/>
+                                            <path d="M10.828.122A.5.5 0 0 1 11 .5V1h.5A1.5 1.5 0 0 1 13 2.5V15h1.5a.5.5 0 0 1 0 1h-13a.5.5 0 0 1 0-1H3V1.5a.5.5 0 0 1 .43-.495l7-1a.5.5 0 0 1 .398.117M11.5 2H11v13h1V2.5a.5.5 0 0 0-.5-.5M4 1.934V15h6V1.077z"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted small">Bedrooms / Bathrooms</div>
+                                        <div class="fs-4 fw-bold">@Model.Bedrooms BD / @Model.Bathrooms BA</div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        @if (Model.YearBuilt.HasValue)
+                        {
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="feature-icon bg-warning bg-opacity-10 text-warning rounded-circle p-3 me-3">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-calendar-event" viewBox="0 0 16 16">
+                                            <path d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z"/>
+                                            <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted small">Year Built</div>
+                                        <div class="fs-4 fw-bold">@Model.YearBuilt</div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Evaluation Results Placeholder -->
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4 text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-graph-up text-muted mb-3" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M0 0h1v15h15v1H0zm14.817 3.113a.5.5 0 0 1 .07.704l-4.5 5.5a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61 4.15-5.073a.5.5 0 0 1 .704-.07"/>
+                    </svg>
+                    <h4 class="mb-2">Evaluation Results</h4>
+                    <p class="text-muted mb-0">Detailed evaluation results will be displayed here once the evaluation logic is implemented.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Property Status</h5>
+                    <div class="mb-3">
+                        <small class="text-muted">Condition</small>
+                        <div class="fw-semibold">@Model.PropertyConditions</div>
+                    </div>
+                    @if (Model.LotSizeSqft.HasValue)
+                    {
+                        <div class="mb-3">
+                            <small class="text-muted">Lot Size</small>
+                            <div class="fw-semibold">@Model.LotSizeSqft.Value.ToString("N0") sq ft</div>
+                        </div>
+                    }
+                    <div>
+                        <small class="text-muted">Added</small>
+                        <div class="fw-semibold">@Model.CreatedAt.ToString("MMMM d, yyyy")</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2">
+                <a asp-controller="Property" asp-action="Index" class="btn btn-outline-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left me-2" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/>
+                    </svg>
+                    Back to Properties
+                </a>
+                <form asp-controller="Property" asp-action="Delete" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Are you sure you want to delete this property? This action cannot be undone.');">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-outline-danger w-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash me-2" viewBox="0 0 16 16">
+                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                            <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                        </svg>
+                        Delete Property
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+}

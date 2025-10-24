@@ -1,163 +1,113 @@
 ﻿@{
-    ViewData["Title"] = "Evaluate Your Deal";
+    ViewData["Title"] = "Home";
 }
 
-<div class="hero-section text-center py-5 mb-5" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 10px;">
-    <h1 class="display-3 fw-bold mb-3">Real Estate Deal Analyzer</h1>
-    <p class="lead fs-4">Underwrite your next investment property in seconds</p>
+<div class="hero-section text-center py-5 mb-5" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px;">
+    <div class="container">
+        <h1 class="display-3 fw-bold mb-3">Real Estate Deal Analyzer</h1>
+        <p class="lead fs-4 mb-4">Underwrite your next investment property in seconds</p>
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                <a asp-controller="Property" asp-action="Create" class="btn btn-light btn-lg px-4 gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-plus-circle me-2" viewBox="0 0 16 16" style="vertical-align: text-bottom;">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                    </svg>
+                    Add New Property
+                </a>
+                <a asp-controller="Property" asp-action="Index" class="btn btn-outline-light btn-lg px-4">
+                    View My Properties
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                <a asp-controller="Account" asp-action="Register" class="btn btn-light btn-lg px-4 gap-3">
+                    Get Started Free
+                </a>
+                <a asp-controller="Account" asp-action="Login" class="btn btn-outline-light btn-lg px-4">
+                    Sign In
+                </a>
+            </div>
+        }
+    </div>
 </div>
 
-<div class="row justify-content-center">
-    <div class="col-lg-10 col-xl-8">
-        <div class="card shadow-lg border-0">
-            <div class="card-body p-4 p-md-5">
-                <h2 class="card-title text-center mb-4 fw-bold">Property Details</h2>
-
-                <form id="propertyForm" method="post" asp-controller="Home" asp-action="EvaluateProperty">
-
-                    <!-- Address Information -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <h5 class="text-muted mb-3"><i class="bi bi-house-door"></i> Location</h5>
-                        </div>
-                        <div class="col-md-12 mb-3">
-                            <label for="Address" class="form-label">Address</label>
-                            <input type="text" class="form-control form-control-lg" id="Address" name="Address" placeholder="123 Main Street" required>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="City" class="form-label">City</label>
-                            <input type="text" class="form-control" id="City" name="City" placeholder="Dallas" required>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="State" class="form-label">State</label>
-                            <input type="text" class="form-control" id="State" name="State" placeholder="TX" maxlength="2" required>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="ZipCode" class="form-label">Zip Code</label>
-                            <input type="text" class="form-control" id="ZipCode" name="ZipCode" placeholder="75001" maxlength="5" required>
-                        </div>
+<!-- Features Section -->
+<div class="container">
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card text-center border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="feature-icon bg-primary bg-opacity-10 rounded-circle p-3 d-inline-flex mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" class="bi bi-lightning-charge text-primary" viewBox="0 0 16 16">
+                            <path d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09z"/>
+                        </svg>
                     </div>
-
-                    <hr class="my-4">
-
-                    <!-- Property Characteristics -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <h5 class="text-muted mb-3"><i class="bi bi-building"></i> Property Info</h5>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="PropertyType" class="form-label">Property Type</label>
-                            <select class="form-select" id="PropertyType" name="PropertyType" required>
-                                <option value="">Select Type</option>
-                                <option value="0">Single Family</option>
-                                <option value="1">Multi Family</option>
-                                <option value="2">Condo</option>
-                                <option value="3">Townhouse</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="PropertyConditions" class="form-label">Condition</label>
-                            <select class="form-select" id="PropertyConditions" name="PropertyConditions" required>
-                                <option value="">Select Condition</option>
-                                <option value="0">Excellent</option>
-                                <option value="1">Minor Repairs</option>
-                                <option value="2">Outdated</option>
-                                <option value="3">Bad</option>
-                                <option value="4">Horrible</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Price and Size -->
-                    <div class="row mb-4">
-                        <div class="col-md-6 mb-3">
-                            <label for="Price" class="form-label">Purchase Price ($)</label>
-                            <input type="number" class="form-control" id="Price" name="Price" placeholder="250000" min="0">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="Sqft" class="form-label">Square Feet</label>
-                            <input type="number" class="form-control" id="Sqft" name="Sqft" placeholder="1500" min="0">
-                        </div>
-                    </div>
-
-                    <!-- Bed/Bath -->
-                    <div class="row mb-4">
-                        <div class="col-md-4 mb-3">
-                            <label for="Bedrooms" class="form-label">Bedrooms</label>
-                            <input type="number" class="form-control" id="Bedrooms" name="Bedrooms" placeholder="3" min="0">
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="Bathrooms" class="form-label">Bathrooms</label>
-                            <input type="number" class="form-control" id="Bathrooms" name="Bathrooms" placeholder="2" min="0" step="0.5">
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="YearBuilt" class="form-label">Year Built</label>
-                            <input type="number" class="form-control" id="YearBuilt" name="YearBuilt" placeholder="1995" min="1800" max="2025">
-                        </div>
-                    </div>
-
-                    <!-- Lot Size -->
-                    <div class="row mb-4">
-                        <div class="col-md-12 mb-3">
-                            <label for="LotSizeSqft" class="form-label">Lot Size (sqft)</label>
-                            <input type="number" class="form-control" id="LotSizeSqft" name="LotSizeSqft" placeholder="5000" min="0">
-                        </div>
-                    </div>
-
-                    <!-- Submit Button -->
-                    <div class="d-grid gap-2 mt-4">
-                        <button type="submit" class="btn btn-primary btn-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
-                            <strong>Analyze This Deal</strong>
-                        </button>
-                    </div>
-                </form>
+                    <h3 class="h4 mb-2">Fast Analysis</h3>
+                    <p class="text-muted mb-0">Get comprehensive property evaluations in seconds, not hours</p>
+                </div>
             </div>
         </div>
-
-        <!-- Quick Stats Card -->
-        <div class="row mt-4">
-            <div class="col-md-4 mb-3">
-                <div class="card text-center border-0 shadow-sm">
-                    <div class="card-body">
-                        <h3 class="text-primary">Fast</h3>
-                        <p class="text-muted mb-0">Get results in seconds</p>
+        <div class="col-md-4">
+            <div class="card text-center border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="feature-icon bg-success bg-opacity-10 rounded-circle p-3 d-inline-flex mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" class="bi bi-graph-up text-success" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M0 0h1v15h15v1H0zm14.817 3.113a.5.5 0 0 1 .07.704l-4.5 5.5a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61 4.15-5.073a.5.5 0 0 1 .704-.07"/>
+                        </svg>
                     </div>
+                    <h3 class="h4 mb-2">Data-Driven</h3>
+                    <p class="text-muted mb-0">Make informed decisions based on accurate market data and analytics</p>
                 </div>
             </div>
-            <div class="col-md-4 mb-3">
-                <div class="card text-center border-0 shadow-sm">
-                    <div class="card-body">
-                        <h3 class="text-success">Accurate</h3>
-                        <p class="text-muted mb-0">Data-driven analysis</p>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="feature-icon bg-warning bg-opacity-10 rounded-circle p-3 d-inline-flex mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" class="bi bi-palette text-warning" viewBox="0 0 16 16">
+                            <path d="M8 5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3m4 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3M5.5 7a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m.5 6a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"/>
+                            <path d="M16 8c0 3.15-1.866 2.585-3.567 2.07C11.42 9.763 10.465 9.473 10 10c-.603.683-.475 1.819-.351 2.92C9.826 14.495 9.996 16 8 16a8 8 0 1 1 8-8m-8 7c.611 0 .654-.171.655-.176.078-.146.124-.464.07-1.119-.014-.168-.037-.37-.061-.591-.052-.464-.112-1.005-.118-1.462-.01-.707.083-1.61.704-2.314.369-.417.845-.578 1.272-.618.404-.038.812.026 1.16.104.343.077.702.186 1.025.284l.028.008c.346.105.658.199.953.266.653.148.904.083.991.024C14.717 9.38 15 9.161 15 8a7 7 0 1 0-7 7"/>
+                        </svg>
                     </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-3">
-                <div class="card text-center border-0 shadow-sm">
-                    <div class="card-body">
-                        <h3 class="text-warning">Simple</h3>
-                        <p class="text-muted mb-0">No complex setup needed</p>
-                    </div>
+                    <h3 class="h4 mb-2">Simple to Use</h3>
+                    <p class="text-muted mb-0">No complex setup or training needed - just enter property details and go</p>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- How It Works Section -->
+    <div class="row mt-5">
+        <div class="col-12 text-center mb-4">
+            <h2 class="fw-bold">How It Works</h2>
+            <p class="text-muted">Three simple steps to evaluate your next investment</p>
+        </div>
+    </div>
+    <div class="row g-4 mb-5">
+        <div class="col-md-4 text-center">
+            <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px; font-size: 24px; font-weight: bold;">
+                1
+            </div>
+            <h4>Add Property</h4>
+            <p class="text-muted">Enter basic property details like address, size, and price</p>
+        </div>
+        <div class="col-md-4 text-center">
+            <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px; font-size: 24px; font-weight: bold;">
+                2
+            </div>
+            <h4>Analyze Deal</h4>
+            <p class="text-muted">Our system evaluates the property using market data and algorithms</p>
+        </div>
+        <div class="col-md-4 text-center">
+            <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px; font-size: 24px; font-weight: bold;">
+                3
+            </div>
+            <h4>Make Decision</h4>
+            <p class="text-muted">Review detailed metrics and decide if it's a good investment</p>
+        </div>
+    </div>
 </div>
-
-@section Scripts {
-    <script>
-        // Auto-uppercase state input
-        document.getElementById('State').addEventListener('input', function(e) {
-            e.target.value = e.target.value.toUpperCase();
-        });
-
-        // Form validation feedback
-        document.getElementById('propertyForm').addEventListener('submit', function(e) {
-            if (!this.checkValidity()) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            this.classList.add('was-validated');
-        });
-    </script>
-}

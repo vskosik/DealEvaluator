@@ -56,7 +56,6 @@ public class PropertyService : IPropertyService
 
     public async Task<List<PropertyDto>> GetUserPropertiesAsync(string userId)
     {
-        // TODO: Implement this when you add GetByUserIdAsync to IPropertyRepository
         var properties = await _propertyRepository.GetPropertiesByUserIdAsync(userId);
         
         return _mapper.Map<List<PropertyDto>>(properties);

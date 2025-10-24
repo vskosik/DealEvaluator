@@ -5,7 +5,7 @@ namespace DealEvaluator.Application.DTOs.Comparable;
 public class CreateComparableDto
 {
     public int PropertyId { get; set; }
-    public DateTime SaleDate { get; set; }
+    public DateTime? SaleDate { get; set; }
     public ListingStatuses ListingStatus { get; set; }
     public string Source { get; set; }
 

@@ -1,0 +1,185 @@
+@model DealEvaluator.Application.DTOs.Property.CreatePropertyDto
+
+@{
+    ViewData["Title"] = "Add New Property";
+}
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Property" asp-action="Index">My Properties</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Add New Property</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-body p-4 p-md-5">
+                    <h2 class="card-title text-center mb-4 fw-bold">Add New Property</h2>
+                    <p class="text-center text-muted mb-4">Enter property details to evaluate this investment opportunity</p>
+
+                    <form id="propertyForm" method="post" asp-controller="Property" asp-action="Create">
+                        @Html.AntiForgeryToken()
+
+                        <!-- Address Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-muted mb-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-house-door me-2" viewBox="0 0 16 16" style="vertical-align: text-bottom;">
+                                        <path d="M8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4.5a.5.5 0 0 0 .5-.5v-4h2v4a.5.5 0 0 0 .5.5H14a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293zM2.5 14V7.707l5.5-5.5 5.5 5.5V14H10v-4a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5v4z"/>
+                                    </svg>
+                                    Location
+                                </h5>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label for="Address" class="form-label">Street Address *</label>
+                                <input type="text" class="form-control form-control-lg" id="Address" name="Address" placeholder="123 Main Street" required>
+                                <div class="invalid-feedback">Please enter a street address.</div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="City" class="form-label">City *</label>
+                                <input type="text" class="form-control" id="City" name="City" placeholder="Dallas" required>
+                                <div class="invalid-feedback">Please enter a city.</div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="State" class="form-label">State *</label>
+                                <input type="text" class="form-control" id="State" name="State" placeholder="TX" maxlength="2" required>
+                                <div class="invalid-feedback">Please enter a state (2 letters).</div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="ZipCode" class="form-label">Zip Code *</label>
+                                <input type="text" class="form-control" id="ZipCode" name="ZipCode" placeholder="75001" maxlength="5" required>
+                                <div class="invalid-feedback">Please enter a 5-digit zip code.</div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Property Characteristics -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-muted mb-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-building me-2" viewBox="0 0 16 16" style="vertical-align: text-bottom;">
+                                        <path d="M4 2.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zM4 5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zM7.5 5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm2.5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zM4.5 8a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm2.5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5z"/>
+                                        <path d="M2 1a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1zm11 0H3v14h3v-2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V15h3z"/>
+                                    </svg>
+                                    Property Information
+                                </h5>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="PropertyType" class="form-label">Property Type *</label>
+                                <select class="form-select" id="PropertyType" name="PropertyType" required>
+                                    <option value="">Select Type</option>
+                                    <option value="0">Single Family</option>
+                                    <option value="1">Multi Family</option>
+                                    <option value="2">Condo</option>
+                                    <option value="3">Townhouse</option>
+                                </select>
+                                <div class="invalid-feedback">Please select a property type.</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="PropertyConditions" class="form-label">Condition *</label>
+                                <select class="form-select" id="PropertyConditions" name="PropertyConditions" required>
+                                    <option value="">Select Condition</option>
+                                    <option value="0">Excellent</option>
+                                    <option value="1">Minor Repairs</option>
+                                    <option value="2">Outdated</option>
+                                    <option value="3">Bad</option>
+                                    <option value="4">Horrible</option>
+                                </select>
+                                <div class="invalid-feedback">Please select property condition.</div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Financial Details -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-muted mb-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-currency-dollar me-2" viewBox="0 0 16 16" style="vertical-align: text-bottom;">
+                                        <path d="M4 10.781c.148 1.667 1.513 2.85 3.591 3.003V15h1.043v-1.216c2.27-.179 3.678-1.438 3.678-3.3 0-1.59-.947-2.51-2.956-3.028l-.722-.187V3.467c1.122.11 1.879.714 2.07 1.616h1.47c-.166-1.6-1.54-2.748-3.54-2.875V1H7.591v1.233c-1.939.23-3.27 1.472-3.27 3.156 0 1.454.966 2.483 2.661 2.917l.61.162v4.031c-1.149-.17-1.94-.8-2.131-1.718zm3.391-3.836c-1.043-.263-1.6-.825-1.6-1.616 0-.944.704-1.641 1.8-1.828v3.495l-.2-.05zm1.591 1.872c1.287.323 1.852.859 1.852 1.769 0 1.097-.826 1.828-2.2 1.939V8.73z"/>
+                                    </svg>
+                                    Price & Size
+                                </h5>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="Price" class="form-label">Purchase Price ($)</label>
+                                <input type="number" class="form-control" id="Price" name="Price" placeholder="250000" min="0">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="Sqft" class="form-label">Square Feet</label>
+                                <input type="number" class="form-control" id="Sqft" name="Sqft" placeholder="1500" min="0">
+                            </div>
+                        </div>
+
+                        <!-- Bed/Bath -->
+                        <div class="row mb-4">
+                            <div class="col-md-4 mb-3">
+                                <label for="Bedrooms" class="form-label">Bedrooms</label>
+                                <input type="number" class="form-control" id="Bedrooms" name="Bedrooms" placeholder="3" min="0">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="Bathrooms" class="form-label">Bathrooms</label>
+                                <input type="number" class="form-control" id="Bathrooms" name="Bathrooms" placeholder="2" min="0" step="0.5">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="YearBuilt" class="form-label">Year Built</label>
+                                <input type="number" class="form-control" id="YearBuilt" name="YearBuilt" placeholder="1995" min="1800" max="2025">
+                            </div>
+                        </div>
+
+                        <!-- Lot Size -->
+                        <div class="row mb-4">
+                            <div class="col-md-12 mb-3">
+                                <label for="LotSizeSqft" class="form-label">Lot Size (sqft)</label>
+                                <input type="number" class="form-control" id="LotSizeSqft" name="LotSizeSqft" placeholder="5000" min="0">
+                            </div>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="row mt-4">
+                            <div class="col-md-6 mb-2">
+                                <a asp-controller="Property" asp-action="Index" class="btn btn-outline-secondary btn-lg w-100">
+                                    Cancel
+                                </a>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <button type="submit" class="btn btn-primary btn-lg w-100">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-calculator me-2" viewBox="0 0 16 16" style="vertical-align: text-bottom;">
+                                        <path d="M12 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
+                                        <path d="M4 2.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5zm0 4a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z"/>
+                                    </svg>
+                                    Create & Evaluate
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Auto-uppercase state input
+        document.getElementById('State').addEventListener('input', function(e) {
+            e.target.value = e.target.value.toUpperCase();
+        });
+
+        // Form validation
+        document.getElementById('propertyForm').addEventListener('submit', function(e) {
+            if (!this.checkValidity()) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            this.classList.add('was-validated');
+        });
+    </script>
+}
