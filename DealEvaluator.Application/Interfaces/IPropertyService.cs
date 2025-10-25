@@ -1,3 +1,4 @@
+using DealEvaluator.Application.DTOs.Evaluation;
 using DealEvaluator.Application.DTOs.Property;
 
 namespace DealEvaluator.Application.Interfaces;
@@ -42,4 +43,18 @@ public interface IPropertyService
     /// <param name="propertyId">ID of property to evaluate</param>
     /// <returns>Evaluation results</returns>
     Task<object> EvaluatePropertyDealAsync(int propertyId);
+
+    /// <summary>
+    /// Gets all evaluations for a specific property, ordered by most recent first
+    /// </summary>
+    /// <param name="propertyId">ID of the property</param>
+    /// <returns>List of evaluations</returns>
+    Task<List<EvaluationDto>> GetPropertyEvaluationsAsync(int propertyId);
+
+    /// <summary>
+    /// Gets the most recent evaluation for a property
+    /// </summary>
+    /// <param name="propertyId">ID of the property</param>
+    /// <returns>Latest evaluation or null if none exist</returns>
+    Task<EvaluationDto?> GetLatestEvaluationAsync(int propertyId);
 }

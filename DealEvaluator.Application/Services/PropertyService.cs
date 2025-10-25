@@ -1,4 +1,5 @@
 using AutoMapper;
+using DealEvaluator.Application.DTOs.Evaluation;
 using DealEvaluator.Application.DTOs.Property;
 using DealEvaluator.Application.Interfaces;
 using DealEvaluator.Domain.Entities;
@@ -12,11 +13,16 @@ namespace DealEvaluator.Application.Services;
 public class PropertyService : IPropertyService
 {
     private readonly IPropertyRepository _propertyRepository;
+    private readonly IEvaluationRepository _evaluationRepository;
     private readonly IMapper _mapper;
 
-    public PropertyService(IPropertyRepository propertyRepository, IMapper mapper)
+    public PropertyService(
+        IPropertyRepository propertyRepository,
+        IEvaluationRepository evaluationRepository,
+        IMapper mapper)
     {
         _propertyRepository = propertyRepository;
+        _evaluationRepository = evaluationRepository;
         _mapper = mapper;
     }
 
@@ -125,6 +131,18 @@ public class PropertyService : IPropertyService
             // CapRate = capRate,
             // etc...
         };
+    }
+
+    public async Task<List<EvaluationDto>> GetPropertyEvaluationsAsync(int propertyId)
+    {
+        var evaluations = await _evaluationRepository.GetEvaluationsByPropertyIdAsync(propertyId);
+        return _mapper.Map<List<EvaluationDto>>(evaluations);
+    }
+
+    public async Task<EvaluationDto?> GetLatestEvaluationAsync(int propertyId)
+    {
+        var evaluation = await _evaluationRepository.GetLatestEvaluationByPropertyIdAsync(propertyId);
+        return _mapper.Map<EvaluationDto?>(evaluation);
     }
 
     // Private helper methods for calculations

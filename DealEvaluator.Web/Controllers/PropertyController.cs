@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using DealEvaluator.Application.DTOs.Property;
 using DealEvaluator.Application.Interfaces;
+using DealEvaluator.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -67,7 +68,7 @@ public class PropertyController : Controller
             var property = await _propertyService.CreatePropertyAsync(dto, userId);
 
             // Run evaluation logic
-            var evaluationResult = await _propertyService.EvaluatePropertyDealAsync(property.Id);
+            await _propertyService.EvaluatePropertyDealAsync(property.Id);
 
             // Show success message
             TempData["NotificationType"] = "success";
@@ -94,11 +95,22 @@ public class PropertyController : Controller
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var property = await _propertyService.GetPropertyByIdAsync(id);
 
-            // TODO: Add authorization check to ensure user owns this property
-            // For now, we'll allow any authenticated user to view any property
-            // In production, you'd want: if (property.UserId != userId) return Forbid();
+            if (property.UserId != userId)
+                return Forbid();
 
-            return View(property);
+            // Get all evaluations for this property
+            var evaluations = await _propertyService.GetPropertyEvaluationsAsync(id);
+            var latestEvaluation = evaluations.FirstOrDefault();
+
+            // Create ViewModel with property and evaluations
+            var viewModel = new PropertyDetailsViewModel
+            {
+                Property = property,
+                LatestEvaluation = latestEvaluation,
+                EvaluationHistory = evaluations.Skip(1).ToList() // All except the latest
+            };
+
+            return View(viewModel);
         }
         catch (Exception ex)
         {
@@ -106,6 +118,119 @@ public class PropertyController : Controller
             TempData["NotificationType"] = "error";
             TempData["Notification"] = "Property not found.";
             return RedirectToAction("Index");
+        }
+    }
+
+    // GET: Property/Edit/5 - Show form to edit existing property
+    [HttpGet]
+    public async Task<IActionResult> Edit(int id)
+    {
+        try
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var property = await _propertyService.GetPropertyByIdAsync(id);
+
+            if (property.UserId != userId)
+                return Forbid();
+
+            // Map PropertyDto to UpdatePropertyDto for editing
+            var updateDto = new UpdatePropertyDto
+            {
+                Id = property.Id,
+                PropertyType = property.PropertyType,
+                PropertyConditions = property.PropertyConditions,
+                Address = property.Address,
+                City = property.City,
+                State = property.State,
+                ZipCode = property.ZipCode,
+                Price = property.Price,
+                Sqft = property.Sqft,
+                Bedrooms = property.Bedrooms,
+                Bathrooms = property.Bathrooms,
+                LotSizeSqft = property.LotSizeSqft,
+                YearBuilt = property.YearBuilt
+            };
+
+            return View(updateDto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading property for edit, ID {PropertyId}", id);
+            TempData["NotificationType"] = "error";
+            TempData["Notification"] = "Property not found.";
+            return RedirectToAction("Index");
+        }
+    }
+
+    // POST: Property/Edit/5 - Update existing property and re-evaluate
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(UpdatePropertyDto dto)
+    {
+        if (!ModelState.IsValid)
+        {
+            TempData["NotificationType"] = "error";
+            TempData["Notification"] = "Please fill in all required fields correctly.";
+            return View(dto);
+        }
+
+        try
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // Verify ownership
+            var existingProperty = await _propertyService.GetPropertyByIdAsync(dto.Id);
+            if (existingProperty.UserId != userId)
+                return Forbid();
+
+            // Update property
+            var updatedProperty = await _propertyService.UpdatePropertyAsync(dto);
+
+            // Re-run evaluation with updated data
+            await _propertyService.EvaluatePropertyDealAsync(updatedProperty.Id);
+
+            TempData["NotificationType"] = "success";
+            TempData["Notification"] = "Property updated and re-evaluated successfully!";
+
+            return RedirectToAction("Details", new { id = updatedProperty.Id });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating property ID {PropertyId}", dto.Id);
+            TempData["NotificationType"] = "error";
+            TempData["Notification"] = "An error occurred while updating the property.";
+            return View(dto);
+        }
+    }
+
+    // POST: Property/Evaluate/5 - Re-evaluate a property
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Evaluate(int id)
+    {
+        try
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var property = await _propertyService.GetPropertyByIdAsync(id);
+
+            if (property.UserId != userId)
+                return Forbid();
+
+            // Re-run evaluation logic
+            await _propertyService.EvaluatePropertyDealAsync(id);
+
+            TempData["NotificationType"] = "success";
+            TempData["Notification"] = "Property re-evaluated successfully!";
+
+            return RedirectToAction("Details", new { id });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error evaluating property ID {PropertyId}", id);
+            TempData["NotificationType"] = "error";
+            TempData["Notification"] = "Error evaluating property.";
+            return RedirectToAction("Details", new { id });
         }
     }
 
@@ -118,7 +243,10 @@ public class PropertyController : Controller
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            // TODO: Add authorization check to ensure user owns this property
+            var property = await _propertyService.GetPropertyByIdAsync(id);
+
+            if (property.UserId != userId)
+                return Forbid();
 
             await _propertyService.DeletePropertyAsync(id);
 
