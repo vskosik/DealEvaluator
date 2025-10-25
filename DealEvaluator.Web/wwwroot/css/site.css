@@ -12,13 +12,10 @@ html {
   box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
-html {
-  position: relative;
-  min-height: 100%;
-}
-
-body {
-  margin-bottom: 60px;
+/* Sticky Footer */
+.footer {
+  padding: 1rem 0;
+  background-color: #f8f9fa;
 }
 
 /* Header and Navigation Styles */
