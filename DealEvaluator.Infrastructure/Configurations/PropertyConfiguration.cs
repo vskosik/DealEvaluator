@@ -45,22 +45,12 @@ public class PropertyConfiguration : IEntityTypeConfiguration<Property>
             .IsRequired()
             .HasDefaultValueSql("GETUTCDATE()");
         
-        builder.HasOne<User>()
-            .WithMany()
-            .HasForeignKey(x => x.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
-        
         builder.HasMany<ApiLog>()
             .WithOne()
             .HasForeignKey(x => x.PropertyId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.NoAction);
         
         builder.HasMany<Evaluation>()
-            .WithOne()
-            .HasForeignKey(x => x.PropertyId)
-            .OnDelete(DeleteBehavior.Cascade);
-        
-        builder.HasMany<MarketData>()
             .WithOne()
             .HasForeignKey(x => x.PropertyId)
             .OnDelete(DeleteBehavior.Cascade);

@@ -20,6 +20,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasMany<ApiLog>()
             .WithOne()
             .HasForeignKey(a => a.UserId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.NoAction);
     }
 }

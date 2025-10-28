@@ -4,6 +4,7 @@ using DealEvaluator.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DealEvaluator.Web.Migrations
 {
     [DbContext(typeof(DealEvaluatorContext))]
-    partial class DealEvaluatorContextModelSnapshot : ModelSnapshot
+    [Migration("20251028040616_RedesignMarketData")]
+    partial class RedesignMarketData
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -65,7 +68,7 @@ namespace DealEvaluator.Web.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ApiLogs", (string)null);
+                    b.ToTable("ApiLogs");
                 });
 
             modelBuilder.Entity("DealEvaluator.Domain.Entities.Comparable", b =>
@@ -127,7 +130,7 @@ namespace DealEvaluator.Web.Migrations
 
                     b.HasIndex("PropertyId");
 
-                    b.ToTable("Comparables", (string)null);
+                    b.ToTable("Comparables");
                 });
 
             modelBuilder.Entity("DealEvaluator.Domain.Entities.Evaluation", b =>
@@ -168,7 +171,7 @@ namespace DealEvaluator.Web.Migrations
 
                     b.HasIndex("PropertyId");
 
-                    b.ToTable("Evaluations", (string)null);
+                    b.ToTable("Evaluations");
                 });
 
             modelBuilder.Entity("DealEvaluator.Domain.Entities.MarketData", b =>
@@ -205,7 +208,7 @@ namespace DealEvaluator.Web.Migrations
 
                     b.HasIndex("ZipCode");
 
-                    b.ToTable("MarketData", (string)null);
+                    b.ToTable("MarketData");
                 });
 
             modelBuilder.Entity("DealEvaluator.Domain.Entities.Property", b =>
@@ -273,7 +276,7 @@ namespace DealEvaluator.Web.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Properties", (string)null);
+                    b.ToTable("Properties");
                 });
 
             modelBuilder.Entity("DealEvaluator.Domain.Entities.User", b =>

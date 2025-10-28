@@ -29,15 +29,5 @@ public class ApiLogConfiguration : IEntityTypeConfiguration<ApiLog>
         builder.Property(x => x.CreatedAt)
             .IsRequired()
             .HasDefaultValueSql("GETUTCDATE()");
-
-        builder.HasOne<Property>()
-            .WithMany()
-            .HasForeignKey(x => x.PropertyId)
-            .OnDelete(DeleteBehavior.SetNull);
-
-        builder.HasOne<User>()
-            .WithMany()
-            .HasForeignKey(x => x.UserId)
-            .OnDelete(DeleteBehavior.SetNull);
     }
 }

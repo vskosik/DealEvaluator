@@ -50,6 +50,24 @@ public class PropertyRepository : DbRepository<Property>, IPropertyRepository
             .ToListAsync();
     }
 
+    // Get a single comparable by id
+    public async Task<Comparable?> GetComparableByIdAsync(int comparableId)
+    {
+        return await _comparables
+            .FirstOrDefaultAsync(c => c.Id == comparableId);
+    }
+
+    // Delete a comparable
+    public async Task DeleteComparableAsync(int comparableId)
+    {
+        var comparable = await GetComparableByIdAsync(comparableId);
+        if (comparable != null)
+        {
+            _comparables.Remove(comparable);
+            await _context.SaveChangesAsync();
+        }
+    }
+
     // Find property by address and user to prevent duplicates
     public async Task<Property?> GetPropertyByAddressAndUserAsync(string address, string userId)
     {

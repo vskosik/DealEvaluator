@@ -94,7 +94,8 @@ public class SeedData
             context.Properties.AddRange(propertyList);
         }
         
-        if (!context.MarketData.Any())
+        // TODO: Change to new Entity Schema
+        /*if (!context.MarketData.Any())
         {
             var marketDataList = new List<MarketData>
             {
@@ -122,7 +123,7 @@ public class SeedData
             };
             
             context.MarketData.AddRange(marketDataList);
-        }
+        }*/
         
         if (!context.Evaluations.Any())
         {

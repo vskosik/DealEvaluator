@@ -385,6 +385,155 @@
                     </div>
                 </div>
             }
+
+            <!-- Comparables Section -->
+            <div class="card shadow-sm border-0 mt-4">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0 fw-bold">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-houses me-2" viewBox="0 0 16 16">
+                                <path d="M5.793 1a1 1 0 0 1 1.414 0l.647.646a.5.5 0 1 1-.708.708L6.5 1.707 2 6.207V12.5a.5.5 0 0 0 .5.5.5.5 0 0 1 0 1A1.5 1.5 0 0 1 1 12.5V7.207l-.146.147a.5.5 0 0 1-.708-.708zm3 1a1 1 0 0 1 1.414 0L12 3.793V2.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v3.293l1.854 1.853a.5.5 0 0 1-.708.708L15 8.207V13.5a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 4 13.5V8.207l-.146.147a.5.5 0 1 1-.708-.708zm.707.707L5 7.207V13.5a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5V7.207z"/>
+                            </svg>
+                            Comparable Properties
+                            <span class="badge bg-primary ms-2">@Model.Comparables.Count</span>
+                        </h4>
+                        <div>
+                            <button class="btn btn-sm btn-primary me-2" type="button" onclick="alert('Add Comparable feature coming soon!')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle me-1" viewBox="0 0 16 16">
+                                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                                </svg>
+                                Add Comparable
+                            </button>
+                            <button class="btn btn-sm btn-success" type="button" onclick="alert('Refresh comparables feature coming soon!')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-clockwise me-1" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/>
+                                    <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/>
+                                </svg>
+                                Refresh Comps
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.Comparables.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Address</th>
+                                        <th>Price</th>
+                                        <th>Sqft</th>
+                                        <th>Bed/Bath</th>
+                                        <th>Sale Date</th>
+                                        <th>Status</th>
+                                        <th>Source</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var comp in Model.Comparables)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="fw-bold">@comp.Address</div>
+                                                <small class="text-muted">@comp.City, @comp.State @comp.ZipCode</small>
+                                            </td>
+                                            <td>
+                                                @if (comp.Price.HasValue)
+                                                {
+                                                    <span class="fw-bold text-success">$@comp.Price.Value.ToString("N0")</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">N/A</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (comp.Sqft.HasValue)
+                                                {
+                                                    <span>@comp.Sqft.Value.ToString("N0") sf</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">N/A</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (comp.Bedrooms.HasValue || comp.Bathrooms.HasValue)
+                                                {
+                                                    <span>@comp.Bedrooms / @comp.Bathrooms</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">N/A</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (comp.SaleDate.HasValue)
+                                                {
+                                                    <span>@comp.SaleDate.Value.ToString("MMM d, yyyy")</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">N/A</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="badge
+                                                    @(comp.ListingStatus.ToString() == "Sold" ? "bg-success" :
+                                                      comp.ListingStatus.ToString() == "ForSale" ? "bg-primary" :
+                                                      comp.ListingStatus.ToString() == "Pending" ? "bg-warning" : "bg-secondary")">
+                                                    @comp.ListingStatus
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">@comp.Source</small>
+                                            </td>
+                                            <td>
+                                                <form asp-controller="Property"
+                                                      asp-action="DeleteComparable"
+                                                      asp-route-comparableId="@comp.Id"
+                                                      asp-route-propertyId="@Model.Property.Id"
+                                                      method="post"
+                                                      onsubmit="return confirm('Are you sure you want to remove this comparable?');"
+                                                      style="display: inline;">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                                                            <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                                                        </svg>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="p-5 text-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-house-slash text-muted mb-3" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M1.146 1.146a.5.5 0 0 0 0 .708l13 13a.5.5 0 0 0 .708-.708l-13-13a.5.5 0 0 0-.708 0M8 2.5 13.5 8V13h-3v-2a.5.5 0 0 0-.5-.5H6a.5.5 0 0 0-.5.5v2h-3V8.207l.854-.853L1.5 5.5v7a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5V8.5l-6-6z"/>
+                            </svg>
+                            <h5 class="mb-2">No Comparables Yet</h5>
+                            <p class="text-muted mb-3">
+                                Click "Add Comparable" to select properties from the map, or "Refresh Comps" to fetch from Zillow.
+                            </p>
+
+                            <!-- Test Map -->
+                            <div class="mb-4">
+                                <h6 class="text-start mb-2">Test Map (will be in modal later):</h6>
+                                <div id="test-map" style="height: 400px; width: 100%; border: 2px solid #dee2e6; border-radius: 8px;"></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
 
         <!-- Action Sidebar -->
@@ -460,4 +609,44 @@
             justify-content: center;
         }
     </style>
+}
+
+@section Scripts {
+    <script>
+        //TODO: Change to use actual Property location and comps
+        // Initialize Leaflet map when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if test-map element exists
+            const mapElement = document.getElementById('test-map');
+            if (mapElement) {
+                // Initialize the map centered on a default location (San Francisco)
+                // Later we'll center it on the property's location
+                const map = L.map('test-map').setView([37.7749, -122.4194], 13);
+
+                // Add CartoDB Positron tiles (clean, minimal style)
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                    maxZoom: 19
+                }).addTo(map);
+
+                // Add a test marker
+                const marker = L.marker([37.7749, -122.4194]).addTo(map);
+                marker.bindPopup('<b>Test Property</b><br>123 Main St<br>San Francisco, CA').openPopup();
+
+                // Add a few more test markers to simulate market data
+                const testProperties = [
+                    { lat: 37.7849, lng: -122.4094, name: '456 Oak Ave', price: '$850,000' },
+                    { lat: 37.7649, lng: -122.4294, name: '789 Pine St', price: '$920,000' },
+                    { lat: 37.7749, lng: -122.4394, name: '321 Elm Rd', price: '$780,000' }
+                ];
+
+                testProperties.forEach(prop => {
+                    const m = L.marker([prop.lat, prop.lng]).addTo(map);
+                    m.bindPopup(`<b>${prop.name}</b><br>${prop.price}`);
+                });
+
+                console.log('Leaflet map initialized successfully!');
+            }
+        });
+    </script>
 }

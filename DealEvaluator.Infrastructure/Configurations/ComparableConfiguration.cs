@@ -33,10 +33,5 @@ public class ComparableConfiguration : IEntityTypeConfiguration<Comparable>
             .HasConversion<int>();
 
         builder.Property(x => x.Source).IsRequired();
-        
-        builder.HasOne<Property>()
-            .WithMany()
-            .HasForeignKey(x => x.PropertyId)
-            .OnDelete(DeleteBehavior.Cascade);
     }
 }

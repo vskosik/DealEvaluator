@@ -1,4 +1,5 @@
 using AutoMapper;
+using DealEvaluator.Application.DTOs.Comparable;
 using DealEvaluator.Application.DTOs.Evaluation;
 using DealEvaluator.Application.DTOs.Property;
 using DealEvaluator.Application.Interfaces;
@@ -94,13 +95,13 @@ public class PropertyService : IPropertyService
         await _propertyRepository.SaveChangesAsync();
     }
 
+    // TODO: Make an actual evaluation logic
     public async Task<object> EvaluatePropertyDealAsync(int propertyId)
     {
-        // TODO: This is where your core evaluation logic will go
         // 1. Get the property from database
-        var property = await _propertyRepository.GetByIdAsync(propertyId);
-        if (property == null)
-            throw new KeyNotFoundException($"Property with ID {propertyId} not found");
+        // var property = await _propertyRepository.GetByIdAsync(propertyId);
+        // if (property == null)
+        //     throw new KeyNotFoundException($"Property with ID {propertyId} not found");
 
         // 2. Fetch comparable properties (comps) from your repository or Zillow API
         // var comps = await _comparableRepository.GetComparablesByLocationAsync(property.ZipCode);
@@ -143,6 +144,17 @@ public class PropertyService : IPropertyService
     {
         var evaluation = await _evaluationRepository.GetLatestEvaluationByPropertyIdAsync(propertyId);
         return _mapper.Map<EvaluationDto?>(evaluation);
+    }
+
+    public async Task<List<ComparableDto>> GetComparablesAsync(int propertyId)
+    {
+        var comparables = await _propertyRepository.GetComparablesAsync(propertyId);
+        return _mapper.Map<List<ComparableDto>>(comparables);
+    }
+
+    public async Task DeleteComparableAsync(int comparableId)
+    {
+        await _propertyRepository.DeleteComparableAsync(comparableId);
     }
 
     // Private helper methods for calculations

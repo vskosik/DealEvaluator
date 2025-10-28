@@ -102,12 +102,16 @@ public class PropertyController : Controller
             var evaluations = await _propertyService.GetPropertyEvaluationsAsync(id);
             var latestEvaluation = evaluations.FirstOrDefault();
 
-            // Create ViewModel with property and evaluations
+            // Get all comparables for this property
+            var comparables = await _propertyService.GetComparablesAsync(id);
+
+            // Create ViewModel with property, evaluations, and comparables
             var viewModel = new PropertyDetailsViewModel
             {
                 Property = property,
                 LatestEvaluation = latestEvaluation,
-                EvaluationHistory = evaluations.Skip(1).ToList() // All except the latest
+                EvaluationHistory = evaluations.Skip(1).ToList(), // All except the latest
+                Comparables = comparables
             };
 
             return View(viewModel);
@@ -261,6 +265,36 @@ public class PropertyController : Controller
             TempData["NotificationType"] = "error";
             TempData["Notification"] = "Error deleting property.";
             return RedirectToAction("Index");
+        }
+    }
+
+    // POST: Property/DeleteComparable - Delete a comparable
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteComparable(int comparableId, int propertyId)
+    {
+        try
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // Verify property ownership
+            var property = await _propertyService.GetPropertyByIdAsync(propertyId);
+            if (property.UserId != userId)
+                return Forbid();
+
+            await _propertyService.DeleteComparableAsync(comparableId);
+
+            TempData["NotificationType"] = "success";
+            TempData["Notification"] = "Comparable deleted successfully.";
+
+            return RedirectToAction("Details", new { id = propertyId });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting comparable ID {ComparableId}", comparableId);
+            TempData["NotificationType"] = "error";
+            TempData["Notification"] = "Error deleting comparable.";
+            return RedirectToAction("Details", new { id = propertyId });
         }
     }
 }

@@ -20,10 +20,5 @@ public class EvaluationConfiguration : IEntityTypeConfiguration<Evaluation>
         builder.Property(x => x.CreatedAt)
             .IsRequired()
             .HasDefaultValueSql("GETUTCDATE()");
-        
-        builder.HasOne<Property>()
-            .WithMany()
-            .HasForeignKey(x => x.PropertyId)
-            .OnDelete(DeleteBehavior.Cascade);
     }
 }

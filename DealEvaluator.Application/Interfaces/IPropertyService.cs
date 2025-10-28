@@ -1,3 +1,4 @@
+using DealEvaluator.Application.DTOs.Comparable;
 using DealEvaluator.Application.DTOs.Evaluation;
 using DealEvaluator.Application.DTOs.Property;
 
@@ -57,4 +58,17 @@ public interface IPropertyService
     /// <param name="propertyId">ID of the property</param>
     /// <returns>Latest evaluation or null if none exist</returns>
     Task<EvaluationDto?> GetLatestEvaluationAsync(int propertyId);
+
+    /// <summary>
+    /// Gets all comparables for a specific property
+    /// </summary>
+    /// <param name="propertyId">ID of the property</param>
+    /// <returns>List of comparables</returns>
+    Task<List<ComparableDto>> GetComparablesAsync(int propertyId);
+
+    /// <summary>
+    /// Deletes a comparable
+    /// </summary>
+    /// <param name="comparableId">ID of the comparable to delete</param>
+    Task DeleteComparableAsync(int comparableId);
 }
