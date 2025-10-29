@@ -57,6 +57,14 @@ public class PropertyRepository : DbRepository<Property>, IPropertyRepository
             .FirstOrDefaultAsync(c => c.Id == comparableId);
     }
 
+    // Create a new comparable
+    public async Task<Comparable> CreateComparableAsync(Comparable comparable)
+    {
+        await _comparables.AddAsync(comparable);
+        await _context.SaveChangesAsync();
+        return comparable;
+    }
+
     // Delete a comparable
     public async Task DeleteComparableAsync(int comparableId)
     {

@@ -19,6 +19,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped(typeof(IRepository<>), typeof(DbRepository<>));
         services.AddScoped<IPropertyRepository, PropertyRepository>();
         services.AddScoped<IEvaluationRepository, EvaluationRepository>();
+        services.AddScoped<IMarketDataRepository, MarketDataRepository>();
 
         return services;
     }

@@ -9,6 +9,7 @@ public interface IPropertyRepository : IRepository<Property>
     public Task<List<Property>> GetPropertiesInPriceRangeAsync(decimal min, decimal max);
     public Task<List<Comparable>> GetComparablesAsync(int propertyId);
     public Task<Comparable?> GetComparableByIdAsync(int comparableId);
+    public Task<Comparable> CreateComparableAsync(Comparable comparable);
     public Task DeleteComparableAsync(int comparableId);
     public Task<Property?> GetPropertyByAddressAndUserAsync(string address, string userId);
 }

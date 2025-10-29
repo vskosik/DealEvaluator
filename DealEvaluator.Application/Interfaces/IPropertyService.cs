@@ -71,4 +71,11 @@ public interface IPropertyService
     /// </summary>
     /// <param name="comparableId">ID of the comparable to delete</param>
     Task DeleteComparableAsync(int comparableId);
+
+    /// <summary>
+    /// Creates a comparable from market data (Zillow property)
+    /// </summary>
+    /// <param name="dto">Comparable data from market data</param>
+    /// <returns>Created comparable</returns>
+    Task<ComparableDto> CreateComparableFromMarketDataAsync(CreateComparableDto dto);
 }

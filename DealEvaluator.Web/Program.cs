@@ -1,11 +1,8 @@
 using DealEvaluator.Application;
-using DealEvaluator.Application.Services;
 using DealEvaluator.Domain.Entities;
-using DealEvaluator.Domain.Enums;
 using DealEvaluator.Infrastructure;
 using DealEvaluator.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 namespace DealEvaluator.Web;
 
@@ -34,11 +31,7 @@ public class Program
         
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
-
-        // DI
-        builder.Services.AddHttpClient<ZillowApiService>();
-        builder.Services.AddScoped<ZillowApiService>();
-
+        
         var app = builder.Build();
 
         if (!app.Environment.IsDevelopment())

@@ -157,6 +157,13 @@ public class PropertyService : IPropertyService
         await _propertyRepository.DeleteComparableAsync(comparableId);
     }
 
+    public async Task<ComparableDto> CreateComparableFromMarketDataAsync(CreateComparableDto dto)
+    {
+        var comparable = _mapper.Map<Comparable>(dto);
+        var createdComparable = await _propertyRepository.CreateComparableAsync(comparable);
+        return _mapper.Map<ComparableDto>(createdComparable);
+    }
+
     // Private helper methods for calculations
     // private decimal CalculateARV(Property property, List<Comparable> comps) { }
     // private decimal EstimateRepairCost(Property property) { }

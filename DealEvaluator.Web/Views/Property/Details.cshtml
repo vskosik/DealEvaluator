@@ -398,7 +398,7 @@
                             <span class="badge bg-primary ms-2">@Model.Comparables.Count</span>
                         </h4>
                         <div>
-                            <button class="btn btn-sm btn-primary me-2" type="button" onclick="alert('Add Comparable feature coming soon!')">
+                            <button class="btn btn-sm btn-primary me-2" type="button" data-bs-toggle="modal" data-bs-target="#addComparableModal">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle me-1" viewBox="0 0 16 16">
                                     <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
                                     <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
@@ -524,12 +524,12 @@
                             <p class="text-muted mb-3">
                                 Click "Add Comparable" to select properties from the map, or "Refresh Comps" to fetch from Zillow.
                             </p>
-
-                            <!-- Test Map -->
-                            <div class="mb-4">
-                                <h6 class="text-start mb-2">Test Map (will be in modal later):</h6>
-                                <div id="test-map" style="height: 400px; width: 100%; border: 2px solid #dee2e6; border-radius: 8px;"></div>
-                            </div>
+                            <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#addComparableModal">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search me-1" viewBox="0 0 16 16">
+                                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                                </svg>
+                                Find Comparables
+                            </button>
                         </div>
                     }
                 </div>
@@ -599,6 +599,39 @@
     </div>
 </div>
 
+<!-- Add Comparable Modal -->
+<div class="modal fade" id="addComparableModal" tabindex="-1" aria-labelledby="addComparableModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addComparableModalLabel">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-geo-alt me-2" viewBox="0 0 16 16">
+                        <path d="M12.166 8.94c-.524 1.062-1.234 2.12-1.96 3.07A32 32 0 0 1 8 14.58a32 32 0 0 1-2.206-2.57c-.726-.95-1.436-2.008-1.96-3.07C3.304 7.867 3 6.862 3 6a5 5 0 0 1 10 0c0 .862-.305 1.867-.834 2.94M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10"/>
+                        <path d="M8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4m0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
+                    </svg>
+                    Select Comparable Properties - @Model.Property.ZipCode
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="loading-indicator" class="text-center p-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Loading market data for zip code @Model.Property.ZipCode...</p>
+                </div>
+                <div id="map-container" style="display: none;">
+                    <div id="comparable-map" style="height: 600px; width: 100%;"></div>
+                </div>
+                <div id="error-message" class="alert alert-danger m-3" style="display: none;" role="alert"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Styles {
     <style>
         .feature-icon {
@@ -613,40 +646,226 @@
 
 @section Scripts {
     <script>
-        //TODO: Change to use actual Property location and comps
-        // Initialize Leaflet map when DOM is ready
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check if test-map element exists
-            const mapElement = document.getElementById('test-map');
-            if (mapElement) {
-                // Initialize the map centered on a default location (San Francisco)
-                // Later we'll center it on the property's location
-                const map = L.map('test-map').setView([37.7749, -122.4194], 13);
+        let comparableMap = null;
+        const propertyId = @Model.Property.Id;
+        const zipCode = '@Model.Property.ZipCode';
 
-                // Add CartoDB Positron tiles (clean, minimal style)
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-                    maxZoom: 19
-                }).addTo(map);
+        // TODO: Add main property on the map with red market. It doesn't have lat and lon so figure it out
+        // Main property details
+        const mainProperty = {
+            address: '@Model.Property.Address',
+            city: '@Model.Property.City',
+            state: '@Model.Property.State',
+            price: @Model.Property.Price,
+            sqft: @Model.Property.Sqft,
+            bedrooms: @Model.Property.Bedrooms,
+            bathrooms: @Model.Property.Bathrooms
+        };
 
-                // Add a test marker
-                const marker = L.marker([37.7749, -122.4194]).addTo(map);
-                marker.bindPopup('<b>Test Property</b><br>123 Main St<br>San Francisco, CA').openPopup();
+        // Initialize modal and map when modal is shown
+        document.getElementById('addComparableModal').addEventListener('shown.bs.modal', function() {
+            loadMarketData();
+        });
 
-                // Add a few more test markers to simulate market data
-                const testProperties = [
-                    { lat: 37.7849, lng: -122.4094, name: '456 Oak Ave', price: '$850,000' },
-                    { lat: 37.7649, lng: -122.4294, name: '789 Pine St', price: '$920,000' },
-                    { lat: 37.7749, lng: -122.4394, name: '321 Elm Rd', price: '$780,000' }
-                ];
-
-                testProperties.forEach(prop => {
-                    const m = L.marker([prop.lat, prop.lng]).addTo(map);
-                    m.bindPopup(`<b>${prop.name}</b><br>${prop.price}`);
-                });
-
-                console.log('Leaflet map initialized successfully!');
+        // Clean up map when modal is hidden
+        document.getElementById('addComparableModal').addEventListener('hidden.bs.modal', function() {
+            if (comparableMap) {
+                comparableMap.remove();
+                comparableMap = null;
             }
         });
+
+        async function loadMarketData() {
+            // Show loading, hide error and map
+            document.getElementById('loading-indicator').style.display = 'block';
+            document.getElementById('map-container').style.display = 'none';
+            document.getElementById('error-message').style.display = 'none';
+
+            try {
+                const response = await fetch(`/Property/GetMarketData?zipCode=${zipCode}`);
+                const data = await response.json();
+
+                if (data.success && data.properties && data.properties.length > 0) {
+                    initializeMap(data.properties);
+                } else {
+                    showError('No market data found for zip code ' + zipCode);
+                }
+            } catch (error) {
+                console.error('Error fetching market data:', error);
+                showError('Failed to load market data. Please try again.');
+            } finally {
+                document.getElementById('loading-indicator').style.display = 'none';
+            }
+        }
+
+        function initializeMap(properties) {
+            // Show map container
+            document.getElementById('map-container').style.display = 'block';
+
+            // Calculate center point from properties with coordinates
+            const propsWithCoords = properties.filter(p => p.latitude && p.longitude);
+
+            if (propsWithCoords.length === 0) {
+                showError('No properties with valid coordinates found.');
+                return;
+            }
+
+            const avgLat = propsWithCoords.reduce((sum, p) => sum + p.latitude, 0) / propsWithCoords.length;
+            const avgLng = propsWithCoords.reduce((sum, p) => sum + p.longitude, 0) / propsWithCoords.length;
+
+            // Initialize map
+            comparableMap = L.map('comparable-map').setView([avgLat, avgLng], 15);
+
+            // Add CartoDB Positron tiles
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                maxZoom: 19
+            }).addTo(comparableMap);
+
+            // Add markers for each property
+            propsWithCoords.forEach(prop => {
+                addPropertyMarker(prop);
+            });
+
+            console.log(`Map initialized with ${propsWithCoords.length} properties`);
+        }
+
+        function addPropertyMarker(property) {
+            const marker = L.marker([property.latitude, property.longitude]).addTo(comparableMap);
+
+            // Create popup content with property details and Add button
+            const popupContent = `
+                <div style="min-width: 250px;">
+                    <h6 class="fw-bold mb-2">${property.address || 'Unknown Address'}</h6>
+                    <div class="mb-2">
+                        <strong>Price:</strong> ${property.price ? '$' + property.price.toLocaleString() : 'N/A'}<br>
+                        <strong>Sqft:</strong> ${property.livingArea ? property.livingArea.toLocaleString() + ' sqft' : 'N/A'}<br>
+                        <strong>Bed/Bath:</strong> ${property.bedrooms || '?'} / ${property.bathrooms || '?'}<br>
+                        <strong>Sold On:</strong> ${property.dateSold || "N/A"}
+                    </div>
+                    <button class="btn btn-sm btn-primary w-100" onclick="addAsComparable('${encodeProperty(property)}')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-plus-circle me-1" viewBox="0 0 16 16">
+                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                        </svg>
+                        Add as Comparable
+                    </button>
+                </div>
+            `;
+
+            marker.bindPopup(popupContent);
+        }
+
+        function encodeProperty(property) {
+            // Encode property data as base64 JSON for passing to function
+            return btoa(JSON.stringify(property));
+        }
+
+        async function addAsComparable(encodedProperty) {
+            const property = JSON.parse(atob(encodedProperty));
+            console.log('Adding property as comparable:', property);
+
+            // Convert Unix timestamp to ISO date string if present
+            let saleDate = null;
+            if (property.dateSold) {
+                const date = new Date(property.dateSold);
+                saleDate = date.toISOString();
+            }
+
+            // Parse address if needed (Zillow gives full address as single string)
+            const addressParts = parseAddress(property.address);
+
+            // Map ZillowProperty to CreateComparableDto
+            const dto = {
+                PropertyId: propertyId,
+                SaleDate: saleDate,
+                ListingStatus: mapListingStatus(property.listingStatus),
+                Source: 'Zillow',
+                Address: addressParts.street || property.address || '',
+                City: addressParts.city || '',
+                State: addressParts.state || '',
+                ZipCode: addressParts.zip || '',
+                Price: property.price,
+                Sqft: property.livingArea,
+                Bedrooms: property.bedrooms,
+                Bathrooms: property.bathrooms ? Math.floor(property.bathrooms) : null,
+                LotSizeSqft: null,
+                YearBuilt: null
+            };
+
+            console.log('DTO to send:', dto);
+
+            try {
+                const response = await fetch('/Property/AddComparable', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dto)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Close the modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addComparableModal'));
+                    modal.hide();
+
+                    // Reload the page to show the new comparable
+                    location.reload();
+                } else {
+                    alert('Error adding comparable: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error adding comparable:', error);
+                alert('Failed to add comparable. Please try again.');
+            }
+        }
+
+        function parseAddress(fullAddress) {
+            if (!fullAddress) return { street: '', city: '', state: '', zip: '' };
+
+            // Example: "9218 Success Ave, Los Angeles, CA 90002"
+            const parts = fullAddress.split(',').map(p => p.trim());
+
+            if (parts.length >= 3) {
+                // Last part should have "STATE ZIP"
+                const lastPart = parts[parts.length - 1];
+                const stateZipMatch = lastPart.match(/([A-Z]{2})\s+(\d{5})/);
+
+                return {
+                    street: parts[0] || '',
+                    city: parts[1] || '',
+                    state: stateZipMatch ? stateZipMatch[1] : '',
+                    zip: stateZipMatch ? stateZipMatch[2] : ''
+                };
+            }
+
+            // If parsing fails, return the full address as street
+            return {
+                street: fullAddress,
+                city: '',
+                state: '',
+                zip: ''
+            };
+        }
+
+        function mapListingStatus(zillowStatus) {
+            // Map Zillow listing status to our ListingStatuses enum
+            // ListingStatuses: Sold, Pending, Listed, OffMarket
+            if (!zillowStatus) return 0; // Sold (default)
+
+            const status = zillowStatus.toLowerCase();
+            if (status.includes('sold')) return 0; // Sold
+            if (status.includes('pending')) return 1; // Pending
+            if (status.includes('sale') || status.includes('listed')) return 2; // Listed
+            return 3; // OffMarket
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
     </script>
 }

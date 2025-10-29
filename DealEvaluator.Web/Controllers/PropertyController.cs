@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using DealEvaluator.Application.DTOs.Comparable;
 using DealEvaluator.Application.DTOs.Property;
 using DealEvaluator.Application.Interfaces;
 using DealEvaluator.Web.Models;
@@ -12,13 +13,16 @@ public class PropertyController : Controller
 {
     private readonly ILogger<PropertyController> _logger;
     private readonly IPropertyService _propertyService;
+    private readonly IMarketDataService _marketDataService;
 
     public PropertyController(
         ILogger<PropertyController> logger,
-        IPropertyService propertyService)
+        IPropertyService propertyService,
+        IMarketDataService marketDataService)
     {
         _logger = logger;
         _propertyService = propertyService;
+        _marketDataService = marketDataService;
     }
 
     // GET: Property/Index - List all user's properties
@@ -295,6 +299,83 @@ public class PropertyController : Controller
             TempData["NotificationType"] = "error";
             TempData["Notification"] = "Error deleting comparable.";
             return RedirectToAction("Details", new { id = propertyId });
+        }
+    }
+
+    // POST: Property/AddComparable - Add a comparable from market data
+    [HttpPost]
+    public async Task<IActionResult> AddComparable([FromBody] CreateComparableDto dto)
+    {
+        try
+        {
+            if (dto == null)
+            {
+                _logger.LogError("AddComparable: dto is null");
+                return Json(new { success = false, error = "Invalid data received" });
+            }
+
+            _logger.LogInformation("AddComparable called with PropertyId: {PropertyId}, Address: {Address}",
+                dto.PropertyId, dto.Address);
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // Verify property ownership
+            var property = await _propertyService.GetPropertyByIdAsync(dto.PropertyId);
+            if (property == null)
+            {
+                _logger.LogError("Property not found: {PropertyId}", dto.PropertyId);
+                return Json(new { success = false, error = "Property not found" });
+            }
+
+            if (property.UserId != userId)
+            {
+                _logger.LogError("Unauthorized access attempt for property {PropertyId} by user {UserId}",
+                    dto.PropertyId, userId);
+                return Json(new { success = false, error = "Unauthorized" });
+            }
+
+            var comparable = await _propertyService.CreateComparableFromMarketDataAsync(dto);
+
+            _logger.LogInformation("Successfully added comparable {ComparableId} to property {PropertyId}",
+                comparable.Id, dto.PropertyId);
+
+            return Json(new { success = true, comparable });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error adding comparable for property ID {PropertyId}. DTO: {@Dto}",
+                dto?.PropertyId, dto);
+            return Json(new { success = false, error = $"Failed to add comparable: {ex.Message}" });
+        }
+    }
+
+    // GET: /Property/GetMarketData?zipCode=12345 - API endpoint for fetching market data
+    [HttpGet]
+    public async Task<IActionResult> GetMarketData(string zipCode)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(zipCode))
+            {
+                return BadRequest(new { error = "Zip code is required" });
+            }
+
+            var marketData = await _marketDataService.GetMarketDataForZipCodeAsync(zipCode);
+
+            return Json(new
+            {
+                success = true,
+                properties = marketData
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching market data for zip code: {ZipCode}", zipCode);
+            return Json(new
+            {
+                success = false,
+                error = "Failed to fetch market data"
+            });
         }
     }
 }
