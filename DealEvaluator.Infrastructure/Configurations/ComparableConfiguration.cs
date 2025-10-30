@@ -23,6 +23,8 @@ public class ComparableConfiguration : IEntityTypeConfiguration<Comparable>
         builder.Property(x => x.Bathrooms).IsRequired(false);
         builder.Property(x => x.LotSizeSqft).IsRequired(false);
         builder.Property(x => x.YearBuilt).IsRequired(false);
+        builder.Property(x => x.Latitude).IsRequired(false);
+        builder.Property(x => x.Longitude).IsRequired(false);
 
         builder.Property(x => x.SaleDate)
             .IsRequired(false)

@@ -164,6 +164,19 @@ public class PropertyService : IPropertyService
         return _mapper.Map<ComparableDto>(createdComparable);
     }
 
+    public async Task UpdatePropertyCoordinatesAsync(int propertyId, double latitude, double longitude)
+    {
+        var property = await _propertyRepository.GetByIdAsync(propertyId);
+        if (property == null)
+            throw new KeyNotFoundException($"Property with ID {propertyId} not found");
+
+        property.Latitude = latitude;
+        property.Longitude = longitude;
+
+        _propertyRepository.Update(property);
+        await _propertyRepository.SaveChangesAsync();
+    }
+
     // Private helper methods for calculations
     // private decimal CalculateARV(Property property, List<Comparable> comps) { }
     // private decimal EstimateRepairCost(Property property) { }

@@ -12,4 +12,6 @@ public abstract class RealEstateEntity
     public int? Bathrooms { get; set; }
     public int? LotSizeSqft { get; set; }
     public int? YearBuilt { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
 }

@@ -20,6 +20,8 @@ public class PropertyDto
     public int? Bathrooms { get; set; }
     public int? LotSizeSqft { get; set; }
     public int? YearBuilt { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
 
     public DateTime CreatedAt { get; set; }
 }

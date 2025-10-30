@@ -78,4 +78,12 @@ public interface IPropertyService
     /// <param name="dto">Comparable data from market data</param>
     /// <returns>Created comparable</returns>
     Task<ComparableDto> CreateComparableFromMarketDataAsync(CreateComparableDto dto);
+
+    /// <summary>
+    /// Updates the latitude and longitude coordinates for a property
+    /// </summary>
+    /// <param name="propertyId">ID of the property</param>
+    /// <param name="latitude">Latitude coordinate</param>
+    /// <param name="longitude">Longitude coordinate</param>
+    Task UpdatePropertyCoordinatesAsync(int propertyId, double latitude, double longitude);
 }

@@ -378,4 +378,56 @@ public class PropertyController : Controller
             });
         }
     }
+
+    // POST: /Property/UpdateCoordinates - Update property coordinates after geocoding
+    [HttpPost]
+    public async Task<IActionResult> UpdateCoordinates([FromBody] UpdateCoordinatesRequest request)
+    {
+        try
+        {
+            if (request == null || request.PropertyId <= 0)
+            {
+                return Json(new { success = false, error = "Invalid request data" });
+            }
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // Verify property ownership
+            var property = await _propertyService.GetPropertyByIdAsync(request.PropertyId);
+            if (property == null)
+            {
+                return Json(new { success = false, error = "Property not found" });
+            }
+
+            if (property.UserId != userId)
+            {
+                return Json(new { success = false, error = "Unauthorized" });
+            }
+
+            // Update coordinates
+            await _propertyService.UpdatePropertyCoordinatesAsync(
+                request.PropertyId,
+                request.Latitude,
+                request.Longitude);
+
+            _logger.LogInformation(
+                "Updated coordinates for property {PropertyId}: {Lat}, {Lng}",
+                request.PropertyId, request.Latitude, request.Longitude);
+
+            return Json(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating coordinates for property {PropertyId}", request?.PropertyId);
+            return Json(new { success = false, error = "Failed to update coordinates" });
+        }
+    }
+}
+
+// Request model for UpdateCoordinates endpoint
+public class UpdateCoordinatesRequest
+{
+    public int PropertyId { get; set; }
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
 }
