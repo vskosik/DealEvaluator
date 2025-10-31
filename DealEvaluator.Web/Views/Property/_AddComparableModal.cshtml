@@ -1,0 +1,181 @@
+@model DealEvaluator.Web.Models.PropertyDetailsViewModel
+
+<div class="modal fade" id="addComparableModal" tabindex="-1" aria-labelledby="addComparableModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addComparableModalLabel">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-geo-alt me-2" viewBox="0 0 16 16">
+                        <path d="M12.166 8.94c-.524 1.062-1.234 2.12-1.96 3.07A32 32 0 0 1 8 14.58a32 32 0 0 1-2.206-2.57c-.726-.95-1.436-2.008-1.96-3.07C3.304 7.867 3 6.862 3 6a5 5 0 0 1 10 0c0 .862-.305 1.867-.834 2.94M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10"/>
+                        <path d="M8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4m0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
+                    </svg>
+                    Select Comparable Properties - @Model.Property.ZipCode
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="loading-indicator" class="text-center p-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Loading market data for zip code @Model.Property.ZipCode...</p>
+                </div>
+
+                <!-- Filter Panel -->
+                <div id="filter-panel" style="display: none;" class="border-bottom">
+                    <div class="p-3 bg-light">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-funnel me-2" viewBox="0 0 16 16">
+                                    <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2z"/>
+                                </svg>
+                                Filters
+                                <span id="active-filter-count" class="badge bg-primary ms-2" style="display: none;">0</span>
+                            </h6>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary me-2" onclick="toggleFilters()">
+                                    <span id="filter-toggle-text">Show Filters</span>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="resetFilters()">
+                                    Reset All
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="filter-controls" class="collapse">
+                            <div class="row g-3 mt-2">
+                                <!-- Price Range -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small">Price Range</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="filter-price-min" placeholder="Min" onchange="applyFilters()">
+                                        <span class="input-group-text">to</span>
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="filter-price-max" placeholder="Max" onchange="applyFilters()">
+                                    </div>
+                                </div>
+
+                                <!-- Living Area (Sqft) -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small">Living Area (sqft)</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control" id="filter-sqft-min" placeholder="Min" onchange="applyFilters()">
+                                        <span class="input-group-text">to</span>
+                                        <input type="number" class="form-control" id="filter-sqft-max" placeholder="Max" onchange="applyFilters()">
+                                    </div>
+                                </div>
+
+                                <!-- Bedrooms -->
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold small">Bedrooms</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control" id="filter-bedrooms-min" placeholder="Min" min="0" onchange="applyFilters()">
+                                        <span class="input-group-text">to</span>
+                                        <input type="number" class="form-control" id="filter-bedrooms-max" placeholder="Max" min="0" onchange="applyFilters()">
+                                    </div>
+                                </div>
+
+                                <!-- Bathrooms -->
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold small">Bathrooms</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control" id="filter-bathrooms-min" placeholder="Min" min="0" step="0.5" onchange="applyFilters()">
+                                        <span class="input-group-text">to</span>
+                                        <input type="number" class="form-control" id="filter-bathrooms-max" placeholder="Max" min="0" step="0.5" onchange="applyFilters()">
+                                    </div>
+                                </div>
+
+                                <!-- Days on Zillow -->
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold small">Max Days on Zillow</label>
+                                    <input type="number" class="form-control form-control-sm" id="filter-days-max" placeholder="e.g., 90" min="0" onchange="applyFilters()">
+                                </div>
+
+                                <!-- Zestimate Range -->
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold small">Zestimate</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="filter-zestimate-min" placeholder="Min" onchange="applyFilters()">
+                                    </div>
+                                </div>
+
+                                <!-- Property Type -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small">Property Type</label>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="filter-type-single-family" value="SINGLE_FAMILY" onchange="applyFilters()">
+                                            <label class="form-check-label small" for="filter-type-single-family">Single Family</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="filter-type-condo" value="CONDO" onchange="applyFilters()">
+                                            <label class="form-check-label small" for="filter-type-condo">Condo</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="filter-type-townhouse" value="TOWNHOUSE" onchange="applyFilters()">
+                                            <label class="form-check-label small" for="filter-type-townhouse">Townhouse</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="filter-type-multi-family" value="MULTI_FAMILY" onchange="applyFilters()">
+                                            <label class="form-check-label small" for="filter-type-multi-family">Multi-Family</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Listing Status -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small">Listing Status</label>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="filter-status-sold" value="SOLD" onchange="applyFilters()">
+                                            <label class="form-check-label small" for="filter-status-sold">Sold</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="filter-status-for-sale" value="FOR_SALE" onchange="applyFilters()">
+                                            <label class="form-check-label small" for="filter-status-for-sale">For Sale</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="filter-status-pending" value="PENDING" onchange="applyFilters()">
+                                            <label class="form-check-label small" for="filter-status-pending">Pending</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" id="filter-status-off-market" value="OFF_MARKET" onchange="applyFilters()">
+                                            <label class="form-check-label small" for="filter-status-off-market">Off Market</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Date Sold Range -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small">Date Sold Range</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="date" class="form-control" id="filter-date-sold-from" onchange="applyFilters()">
+                                        <span class="input-group-text">to</span>
+                                        <input type="date" class="form-control" id="filter-date-sold-to" onchange="applyFilters()">
+                                    </div>
+                                </div>
+
+                                <!-- Results count -->
+                                <div class="col-12">
+                                    <div class="alert alert-info mb-0 py-2 small">
+                                        <strong>Showing:</strong> <span id="filtered-count">0</span> of <span id="total-count">0</span> properties
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="map-container" style="display: none;">
+                    <div id="comparable-map" style="height: 600px; width: 100%;"></div>
+                </div>
+                <div id="error-message" class="alert alert-danger m-3" style="display: none;" role="alert"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>

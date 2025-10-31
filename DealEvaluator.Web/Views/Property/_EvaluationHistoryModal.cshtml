@@ -1,0 +1,122 @@
+@model DealEvaluator.Web.Models.PropertyDetailsViewModel
+
+<div class="modal fade" id="evaluationHistoryModal" tabindex="-1" aria-labelledby="evaluationHistoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <h5 class="modal-title fw-bold" id="evaluationHistoryModalLabel">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-clock-history me-2" viewBox="0 0 16 16">
+                        <path d="M8.515 1.019A7 7 0 0 0 8 1V0a8 8 0 0 1 .589.022zm2.004.45a7 7 0 0 0-.985-.299l.219-.976q.576.129 1.126.342zm1.37.71a7 7 0 0 0-.439-.27l.493-.87a8 8 0 0 1 .979.654l-.615.789a7 7 0 0 0-.418-.302zm1.834 1.79a7 7 0 0 0-.653-.796l.724-.69q.406.429.747.91zm.744 1.352a7 7 0 0 0-.214-.468l.893-.45a8 8 0 0 1 .45 1.088l-.95.313a7 7 0 0 0-.179-.483m.53 2.507a7 7 0 0 0-.1-1.025l.985-.17q.1.58.116 1.17zm-.131 1.538q.05-.254.081-.51l.993.123a8 8 0 0 1-.23 1.155l-.964-.267q.069-.247.12-.501m-.952 2.379q.276-.436.486-.908l.914.405q-.24.54-.555 1.038zm-.964 1.205q.183-.183.35-.378l.758.653a8 8 0 0 1-.401.432z"/>
+                        <path d="M8 1a7 7 0 1 0 4.95 11.95l.707.707A8.001 8.001 0 1 1 8 0z"/>
+                        <path d="M7.5 3a.5.5 0 0 1 .5.5v5.21l3.248 1.856a.5.5 0 0 1-.496.868l-3.5-2A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5"/>
+                    </svg>
+                    Evaluation History
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                @if (Model.EvaluationHistory.Any())
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var evaluation in Model.EvaluationHistory)
+                        {
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <h6 class="mb-1 fw-bold">@evaluation.CreatedAt.ToString("MMMM d, yyyy")</h6>
+                                        <small class="text-muted">@evaluation.CreatedAt.ToString("h:mm tt")</small>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#modal-eval-@evaluation.Id">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-eye me-1" viewBox="0 0 16 16">
+                                            <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z"/>
+                                            <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0"/>
+                                        </svg>
+                                        View Details
+                                    </button>
+                                </div>
+
+                                <!-- Summary stats -->
+                                <div class="d-flex gap-3 mb-2 flex-wrap">
+                                    @if (evaluation.Arv.HasValue)
+                                    {
+                                        <span class="badge bg-success">ARV: $@evaluation.Arv.Value.ToString("N0")</span>
+                                    }
+                                    @if (evaluation.CapRate.HasValue)
+                                    {
+                                        <span class="badge bg-info">Cap Rate: @evaluation.CapRate%</span>
+                                    }
+                                    @if (evaluation.CashOnCash.HasValue)
+                                    {
+                                        <span class="badge bg-warning text-dark">CoC: @evaluation.CashOnCash%</span>
+                                    }
+                                </div>
+
+                                <!-- Collapsible details -->
+                                <div class="collapse mt-3" id="modal-eval-@evaluation.Id">
+                                    <div class="card card-body bg-light">
+                                        <div class="row g-3">
+                                            @if (evaluation.Arv.HasValue)
+                                            {
+                                                <div class="col-md-6">
+                                                    <small class="text-muted d-block">After Repair Value (ARV)</small>
+                                                    <strong>$@evaluation.Arv.Value.ToString("N0")</strong>
+                                                </div>
+                                            }
+                                            @if (evaluation.RepairCost.HasValue)
+                                            {
+                                                <div class="col-md-6">
+                                                    <small class="text-muted d-block">Repair Cost</small>
+                                                    <strong>$@evaluation.RepairCost.Value.ToString("N0")</strong>
+                                                </div>
+                                            }
+                                            @if (evaluation.PurchasePrice.HasValue)
+                                            {
+                                                <div class="col-md-6">
+                                                    <small class="text-muted d-block">Purchase Price</small>
+                                                    <strong>$@evaluation.PurchasePrice.Value.ToString("N0")</strong>
+                                                </div>
+                                            }
+                                            @if (evaluation.RentalIncome.HasValue)
+                                            {
+                                                <div class="col-md-6">
+                                                    <small class="text-muted d-block">Monthly Rental Income</small>
+                                                    <strong>$@evaluation.RentalIncome.Value.ToString("N0")</strong>
+                                                </div>
+                                            }
+                                            @if (evaluation.CapRate.HasValue)
+                                            {
+                                                <div class="col-md-6">
+                                                    <small class="text-muted d-block">Cap Rate</small>
+                                                    <strong>@evaluation.CapRate%</strong>
+                                                </div>
+                                            }
+                                            @if (evaluation.CashOnCash.HasValue)
+                                            {
+                                                <div class="col-md-6">
+                                                    <small class="text-muted d-block">Cash-on-Cash Return</small>
+                                                    <strong>@evaluation.CashOnCash%</strong>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="p-5 text-center text-muted">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-inbox mb-3" viewBox="0 0 16 16">
+                            <path d="M4.98 4a.5.5 0 0 0-.39.188L1.54 8H6a.5.5 0 0 1 .5.5 1.5 1.5 0 1 0 3 0A.5.5 0 0 1 10 8h4.46l-3.05-3.812A.5.5 0 0 0 11.02 4zm9.954 5H10.45a2.5 2.5 0 0 1-4.9 0H1.066l.32 2.562a.5.5 0 0 0 .497.438h12.234a.5.5 0 0 0 .496-.438zM3.809 3.563A1.5 1.5 0 0 1 4.981 3h6.038a1.5 1.5 0 0 1 1.172.563l3.7 4.625a.5.5 0 0 1 .105.374l-.39 3.124A1.5 1.5 0 0 1 14.117 13H1.883a1.5 1.5 0 0 1-1.489-1.314l-.39-3.124a.5.5 0 0 1 .106-.374z"/>
+                        </svg>
+                        <p class="mb-0">No previous evaluations found.</p>
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
