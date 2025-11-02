@@ -35,5 +35,9 @@ public class ComparableConfiguration : IEntityTypeConfiguration<Comparable>
             .HasConversion<int>();
 
         builder.Property(x => x.Source).IsRequired();
+
+        builder.Property(x => x.ComparableType)
+            .IsRequired()
+            .HasConversion<int>();
     }
 }

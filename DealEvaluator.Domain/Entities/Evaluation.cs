@@ -8,7 +8,7 @@ public class Evaluation
     public int? RepairCost { get; set; }
     public int? PurchasePrice { get; set; }
     public int? RentalIncome { get; set; }
-    public int? CapRate { get; set; }
-    public int? CashOnCash { get; set; }
+    public decimal? CapRate { get; set; }
+    public decimal? CashOnCash { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
