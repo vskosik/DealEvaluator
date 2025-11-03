@@ -41,6 +41,18 @@
                                     {
                                         <span class="badge bg-success">ARV: $@evaluation.Arv.Value.ToString("N0")</span>
                                     }
+                                    @if (evaluation.MaxOffer.HasValue)
+                                    {
+                                        <span class="badge bg-primary">Max Offer: $@evaluation.MaxOffer.Value.ToString("N0")</span>
+                                    }
+                                    @if (evaluation.Profit.HasValue)
+                                    {
+                                        <span class="badge bg-success">Profit: $@evaluation.Profit.Value.ToString("N0")</span>
+                                    }
+                                    @if (evaluation.Roi.HasValue)
+                                    {
+                                        <span class="badge bg-dark">ROI: @evaluation.Roi.Value.ToString("N2")%</span>
+                                    }
                                     @if (evaluation.CapRate.HasValue)
                                     {
                                         <span class="badge bg-info">Cap Rate: @evaluation.CapRate%</span>
@@ -67,6 +79,27 @@
                                                 <div class="col-md-6">
                                                     <small class="text-muted d-block">Repair Cost</small>
                                                     <strong>$@evaluation.RepairCost.Value.ToString("N0")</strong>
+                                                </div>
+                                            }
+                                            @if (evaluation.MaxOffer.HasValue)
+                                            {
+                                                <div class="col-md-6">
+                                                    <small class="text-muted d-block">Max Offer (70% Rule)</small>
+                                                    <strong>$@evaluation.MaxOffer.Value.ToString("N0")</strong>
+                                                </div>
+                                            }
+                                            @if (evaluation.Profit.HasValue)
+                                            {
+                                                <div class="col-md-6">
+                                                    <small class="text-muted d-block">Potential Profit</small>
+                                                    <strong class="text-success">$@evaluation.Profit.Value.ToString("N0")</strong>
+                                                </div>
+                                            }
+                                            @if (evaluation.Roi.HasValue)
+                                            {
+                                                <div class="col-md-6">
+                                                    <small class="text-muted d-block">Return on Investment</small>
+                                                    <strong>@evaluation.Roi.Value.ToString("N2")%</strong>
                                                 </div>
                                             }
                                             @if (evaluation.PurchasePrice.HasValue)

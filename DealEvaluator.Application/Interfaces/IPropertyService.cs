@@ -86,4 +86,11 @@ public interface IPropertyService
     /// <param name="latitude">Latitude coordinate</param>
     /// <param name="longitude">Longitude coordinate</param>
     Task UpdatePropertyCoordinatesAsync(int propertyId, double latitude, double longitude);
+
+    /// <summary>
+    /// Creates a new evaluation for a property using the 70% rule
+    /// </summary>
+    /// <param name="dto">Evaluation input data including repair cost and comparable IDs</param>
+    /// <returns>Created evaluation with calculated metrics</returns>
+    Task<EvaluationDto> CreateEvaluationAsync(CreateEvaluationDto dto);
 }

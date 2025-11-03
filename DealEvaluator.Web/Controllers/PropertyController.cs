@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using DealEvaluator.Application.DTOs.Comparable;
+using DealEvaluator.Application.DTOs.Evaluation;
 using DealEvaluator.Application.DTOs.Property;
 using DealEvaluator.Application.Interfaces;
 using DealEvaluator.Web.Models;
@@ -211,34 +212,48 @@ public class PropertyController : Controller
         }
     }
 
-    // POST: Property/Evaluate/5 - Re-evaluate a property
+    // POST: Property/CreateEvaluation - Create a new evaluation with 70% rule calculations
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Evaluate(int id)
+    public async Task<IActionResult> CreateEvaluation(CreateEvaluationDto dto)
     {
         try
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            var property = await _propertyService.GetPropertyByIdAsync(id);
+            var property = await _propertyService.GetPropertyByIdAsync(dto.PropertyId);
+
+            if (property == null)
+            {
+                TempData["NotificationType"] = "error";
+                TempData["Notification"] = "Property not found.";
+                return RedirectToAction("Index");
+            }
 
             if (property.UserId != userId)
                 return Forbid();
 
-            // Re-run evaluation logic
-            await _propertyService.EvaluatePropertyDealAsync(id);
+            // Create evaluation using the new service method
+            var evaluation = await _propertyService.CreateEvaluationAsync(dto);
 
             TempData["NotificationType"] = "success";
-            TempData["Notification"] = "Property re-evaluated successfully!";
+            TempData["Notification"] = $"Evaluation created! Max Offer: ${evaluation.MaxOffer:N0}, Potential Profit: ${evaluation.Profit:N0}";
 
-            return RedirectToAction("Details", new { id });
+            return RedirectToAction("Details", new { id = dto.PropertyId });
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Validation error creating evaluation for property {PropertyId}", dto.PropertyId);
+            TempData["NotificationType"] = "error";
+            TempData["Notification"] = ex.Message;
+            return RedirectToAction("Details", new { id = dto.PropertyId });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error evaluating property ID {PropertyId}", id);
+            _logger.LogError(ex, "Error creating evaluation for property ID {PropertyId}", dto.PropertyId);
             TempData["NotificationType"] = "error";
-            TempData["Notification"] = "Error evaluating property.";
-            return RedirectToAction("Details", new { id });
+            TempData["Notification"] = "Error creating evaluation. Please try again.";
+            return RedirectToAction("Details", new { id = dto.PropertyId });
         }
     }
 

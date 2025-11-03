@@ -19,6 +19,7 @@ public class EvaluationRepository : DbRepository<Evaluation>, IEvaluationReposit
     public async Task<List<Evaluation>> GetEvaluationsByPropertyIdAsync(int propertyId)
     {
         return await _evaluations
+            .Include(e => e.Comparables)
             .Where(e => e.PropertyId == propertyId)
             .OrderByDescending(e => e.CreatedAt)
             .ToListAsync();
@@ -27,6 +28,7 @@ public class EvaluationRepository : DbRepository<Evaluation>, IEvaluationReposit
     public async Task<Evaluation?> GetLatestEvaluationByPropertyIdAsync(int propertyId)
     {
         return await _evaluations
+            .Include(e => e.Comparables)
             .Where(e => e.PropertyId == propertyId)
             .OrderByDescending(e => e.CreatedAt)
             .FirstOrDefaultAsync();

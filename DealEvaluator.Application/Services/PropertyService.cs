@@ -177,6 +177,64 @@ public class PropertyService : IPropertyService
         await _propertyRepository.SaveChangesAsync();
     }
 
+    public async Task<EvaluationDto> CreateEvaluationAsync(CreateEvaluationDto dto)
+    {
+        // Validate property exists
+        var property = await _propertyRepository.GetByIdAsync(dto.PropertyId);
+        if (property == null)
+            throw new KeyNotFoundException($"Property with ID {dto.PropertyId} not found");
+
+        // Fetch comparables by IDs
+        var comparables = new List<Comparable>();
+        foreach (var compId in dto.ComparableIds)
+        {
+            var comp = await _propertyRepository.GetComparableByIdAsync(compId);
+            if (comp != null)
+                comparables.Add(comp);
+        }
+
+        if (comparables.Count == 0)
+            throw new InvalidOperationException("At least one valid comparable is required to create an evaluation");
+
+        // Calculate ARV (average price of comparables)
+        var comparablePrices = comparables
+            .Where(c => c.Price.HasValue && c.Price.Value > 0)
+            .Select(c => c.Price!.Value)
+            .ToList();
+
+        if (comparablePrices.Count == 0)
+            throw new InvalidOperationException("Comparables must have valid prices to calculate ARV");
+
+        int arv = (int)comparablePrices.Average();
+        int repairCost = dto.RepairCost ?? 0;
+
+        // Calculate 70% Rule metrics
+        int maxOffer = (int)(arv * 0.7) - repairCost;
+        int profit = arv - repairCost - maxOffer;
+        decimal? roi = maxOffer > 0 ? (decimal)profit / maxOffer * 100 : null;
+
+        // Create evaluation entity
+        var evaluation = new Evaluation
+        {
+            PropertyId = dto.PropertyId,
+            Arv = arv,
+            RepairCost = repairCost,
+            PurchasePrice = dto.PurchasePrice,
+            MaxOffer = maxOffer,
+            Profit = profit,
+            Roi = roi,
+            CreatedAt = DateTime.UtcNow,
+            Comparables = comparables
+        };
+
+        // Save evaluation
+        await _evaluationRepository.AddAsync(evaluation);
+        await _evaluationRepository.SaveChangesAsync();
+
+        // Return DTO
+        return _mapper.Map<EvaluationDto>(evaluation);
+    }
+
     // Private helper methods for calculations
     // private decimal CalculateARV(Property property, List<Comparable> comps) { }
     // private decimal EstimateRepairCost(Property property) { }

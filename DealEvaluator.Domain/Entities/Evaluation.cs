@@ -10,5 +10,14 @@ public class Evaluation
     public int? RentalIncome { get; set; }
     public decimal? CapRate { get; set; }
     public decimal? CashOnCash { get; set; }
+
+    // Fix & Flip Calculations (70% Rule)
+    public int? MaxOffer { get; set; }
+    public int? Profit { get; set; }
+    public decimal? Roi { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    // Navigation properties
+    public ICollection<Comparable> Comparables { get; set; } = new List<Comparable>();
 }
