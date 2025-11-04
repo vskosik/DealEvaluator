@@ -21,4 +21,6 @@ public class ComparableDto
     public int? Bathrooms { get; set; }
     public int? LotSizeSqft { get; set; }
     public int? YearBuilt { get; set; }
+    
+    public ComparableType ComparableType { get; set; }
 }

@@ -10,39 +10,23 @@
  */
 PropertyPage.initializePropertyLocationMap = async function() {
     try {
-        let lat, lng;
-
-        // Check if we already have coordinates stored
-        if (PropertyPage.mainProperty.latitude && PropertyPage.mainProperty.longitude) {
-            lat = PropertyPage.mainProperty.latitude;
-            lng = PropertyPage.mainProperty.longitude;
-            console.log('Using stored coordinates for property location map');
-        } else {
-            // Geocode the address
-            const fullAddress = `${PropertyPage.mainProperty.address}, ${PropertyPage.mainProperty.city}, ${PropertyPage.mainProperty.state}`;
-            console.log('Geocoding property address for location map:', fullAddress);
-
-            const coords = await PropertyPage.geocodeAddress(fullAddress);
-            if (coords) {
-                lat = coords.lat;
-                lng = coords.lng;
-                console.log('Geocoded property to:', lat, lng);
-
-                // Save coordinates to database for future use
-                await PropertyPage.saveCoordinatesToDatabase(lat, lng);
-            } else {
-                console.warn('Could not geocode property address for location map');
-                // Hide the map card if geocoding fails
-                const mapElement = document.getElementById('property-location-map');
-                if (mapElement) {
-                    const mapCard = mapElement.closest('.card');
-                    if (mapCard) {
-                        mapCard.style.display = 'none';
-                    }
+        // Check if we have coordinates from the server
+        if (!PropertyPage.mainProperty.latitude || !PropertyPage.mainProperty.longitude) {
+            console.warn('Property coordinates not available');
+            // Hide the map card if coordinates are not available
+            const mapElement = document.getElementById('property-location-map');
+            if (mapElement) {
+                const mapCard = mapElement.closest('.card');
+                if (mapCard) {
+                    mapCard.style.display = 'none';
                 }
-                return;
             }
+            return;
         }
+
+        const lat = PropertyPage.mainProperty.latitude;
+        const lng = PropertyPage.mainProperty.longitude;
+        console.log('Using coordinates for property location map:', lat, lng);
 
         // Initialize the property location map
         PropertyPage.propertyLocationMap = L.map('property-location-map').setView([lat, lng], 15);

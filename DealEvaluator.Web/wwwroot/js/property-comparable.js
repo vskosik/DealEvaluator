@@ -53,11 +53,22 @@ PropertyPage.initializeComparableMap = async function(properties) {
     const mapContainer = document.getElementById('map-container');
     if (mapContainer) mapContainer.style.display = 'block';
 
-    // Store all properties for filtering
-    PropertyPage.allProperties = properties;
+    // Filter out the main property (subject property) from comparables
+    const mainAddress = PropertyPage.mainProperty.address.toLowerCase().trim();
+    const filteredProperties = properties.filter(p => {
+        if (!p.address) return true; // Keep properties without address
+        const compAddress = p.address.toLowerCase().trim();
+        // Check if addresses match (both exact and partial matches like "123 Main St" vs "123 Main Street")
+        return !compAddress.includes(mainAddress) && !mainAddress.includes(compAddress);
+    });
+
+    console.log(`Filtered out main property. Total properties: ${properties.length}, After filtering: ${filteredProperties.length}`);
+
+    // Store filtered properties for filtering
+    PropertyPage.allProperties = filteredProperties;
 
     // Calculate center point from properties with coordinates
-    const propsWithCoords = properties.filter(p => p.latitude && p.longitude);
+    const propsWithCoords = filteredProperties.filter(p => p.latitude && p.longitude);
 
     if (propsWithCoords.length === 0) {
         PropertyPage.showError('No properties with valid coordinates found.');

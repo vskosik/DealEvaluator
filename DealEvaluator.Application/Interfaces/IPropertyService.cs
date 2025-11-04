@@ -38,14 +38,6 @@ public interface IPropertyService
     Task DeletePropertyAsync(int id);
 
     /// <summary>
-    /// Evaluates a property deal (calculates metrics like ARV, cap rate, etc.)
-    /// This is where your core business logic will go
-    /// </summary>
-    /// <param name="propertyId">ID of property to evaluate</param>
-    /// <returns>Evaluation results</returns>
-    Task<object> EvaluatePropertyDealAsync(int propertyId);
-
-    /// <summary>
     /// Gets all evaluations for a specific property, ordered by most recent first
     /// </summary>
     /// <param name="propertyId">ID of the property</param>
@@ -78,14 +70,6 @@ public interface IPropertyService
     /// <param name="dto">Comparable data from market data</param>
     /// <returns>Created comparable</returns>
     Task<ComparableDto> CreateComparableFromMarketDataAsync(CreateComparableDto dto);
-
-    /// <summary>
-    /// Updates the latitude and longitude coordinates for a property
-    /// </summary>
-    /// <param name="propertyId">ID of the property</param>
-    /// <param name="latitude">Latitude coordinate</param>
-    /// <param name="longitude">Longitude coordinate</param>
-    Task UpdatePropertyCoordinatesAsync(int propertyId, double latitude, double longitude);
 
     /// <summary>
     /// Creates a new evaluation for a property using the 70% rule

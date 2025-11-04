@@ -6,7 +6,6 @@ public class Evaluation
     public int PropertyId { get; set; }
     public int? Arv { get; set; }
     public int? RepairCost { get; set; }
-    public int? PurchasePrice { get; set; }
     public int? RentalIncome { get; set; }
     public decimal? CapRate { get; set; }
     public decimal? CashOnCash { get; set; }

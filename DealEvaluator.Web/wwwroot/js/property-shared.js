@@ -94,38 +94,6 @@ PropertyPage.mapListingStatus = function(zillowStatus) {
 };
 
 /**
- * Saves coordinates to the database for future use
- */
-PropertyPage.saveCoordinatesToDatabase = async function(latitude, longitude) {
-    try {
-        const response = await fetch('/Property/UpdateCoordinates', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                PropertyId: PropertyPage.propertyId,
-                Latitude: latitude,
-                Longitude: longitude
-            })
-        });
-
-        const result = await response.json();
-        if (result.success) {
-            console.log('Coordinates saved to database successfully');
-            // Update the mainProperty object so future loads don't need to geocode
-            PropertyPage.mainProperty.latitude = latitude;
-            PropertyPage.mainProperty.longitude = longitude;
-        } else {
-            console.warn('Failed to save coordinates:', result.error);
-        }
-    } catch (error) {
-        console.error('Error saving coordinates to database:', error);
-        // Don't fail the map display if saving fails
-    }
-};
-
-/**
  * Creates a custom red Leaflet icon for the main property marker
  */
 PropertyPage.createRedIcon = function() {
@@ -140,31 +108,47 @@ PropertyPage.createRedIcon = function() {
 };
 
 /**
- * Geocodes an address using OpenStreetMap's Nominatim service
- * Returns { lat, lng } or null if geocoding fails
+ * Checks if we should prompt for new evaluation after property edit
+ * Looks for ?promptEvaluation=True query parameter
  */
-PropertyPage.geocodeAddress = async function(fullAddress) {
-    try {
-        const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullAddress)}`;
-        const response = await fetch(geocodeUrl, {
-            headers: {
-                'User-Agent': 'DealEvaluator/1.0' // Nominatim requires a user agent
-            }
-        });
+PropertyPage.checkEvaluationPrompt = function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const promptEvaluation = urlParams.get('promptEvaluation');
 
-        const results = await response.json();
-        if (results && results.length > 0) {
-            return {
-                lat: parseFloat(results[0].lat),
-                lng: parseFloat(results[0].lon)
-            };
+    if (promptEvaluation === 'True') {
+        // Show the confirmation modal
+        const promptModal = document.getElementById('evaluationPromptModal');
+        if (promptModal) {
+            const promptModalInstance = new bootstrap.Modal(promptModal);
+            promptModalInstance.show();
+
+            // Set up the confirm button handler
+            const confirmBtn = document.getElementById('confirmCreateEvaluation');
+            if (confirmBtn) {
+                confirmBtn.onclick = function() {
+                    // Close the prompt modal
+                    promptModalInstance.hide();
+
+                    // Open the evaluation modal
+                    const evaluationModal = document.getElementById('createEvaluationModal');
+                    if (evaluationModal) {
+                        const evaluationModalInstance = new bootstrap.Modal(evaluationModal);
+                        evaluationModalInstance.show();
+                    }
+                };
+            }
         }
-        return null;
-    } catch (error) {
-        console.error('Error geocoding address:', error);
-        return null;
+
+        // Clean up URL by removing the promptEvaluation parameter
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
     }
 };
 
 // Make PropertyPage globally accessible
 window.PropertyPage = PropertyPage;
+
+// Check for evaluation prompt on page load
+document.addEventListener('DOMContentLoaded', function() {
+    PropertyPage.checkEvaluationPrompt();
+});

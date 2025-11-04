@@ -102,13 +102,6 @@
                                                     <strong>@evaluation.Roi.Value.ToString("N2")%</strong>
                                                 </div>
                                             }
-                                            @if (evaluation.PurchasePrice.HasValue)
-                                            {
-                                                <div class="col-md-6">
-                                                    <small class="text-muted d-block">Purchase Price</small>
-                                                    <strong>$@evaluation.PurchasePrice.Value.ToString("N0")</strong>
-                                                </div>
-                                            }
                                             @if (evaluation.RentalIncome.HasValue)
                                             {
                                                 <div class="col-md-6">

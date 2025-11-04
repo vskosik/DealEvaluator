@@ -12,7 +12,6 @@ public class EvaluationConfiguration : IEntityTypeConfiguration<Evaluation>
 
         builder.Property(x => x.Arv).IsRequired(false);
         builder.Property(x => x.RepairCost).IsRequired(false);
-        builder.Property(x => x.PurchasePrice).IsRequired(false);
         builder.Property(x => x.RentalIncome).IsRequired(false);
         builder.Property(x => x.CapRate).IsRequired(false);
         builder.Property(x => x.CashOnCash).IsRequired(false);

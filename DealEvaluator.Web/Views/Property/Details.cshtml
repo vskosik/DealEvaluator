@@ -153,7 +153,7 @@
             <!-- Evaluation Results -->
             <partial name="_EvaluationSection" model="Model" />
           
-            <!-- Comparables Section -->
+            <!-- Comparables Pool Section -->
             <div class="card shadow-sm border-0 mt-4">
                 <div class="card-header bg-light">
                     <div class="d-flex justify-content-between align-items-center">
@@ -161,8 +161,12 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-houses me-2" viewBox="0 0 16 16">
                                 <path d="M5.793 1a1 1 0 0 1 1.414 0l.647.646a.5.5 0 1 1-.708.708L6.5 1.707 2 6.207V12.5a.5.5 0 0 0 .5.5.5.5 0 0 1 0 1A1.5 1.5 0 0 1 1 12.5V7.207l-.146.147a.5.5 0 0 1-.708-.708zm3 1a1 1 0 0 1 1.414 0L12 3.793V2.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v3.293l1.854 1.853a.5.5 0 0 1-.708.708L15 8.207V13.5a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 4 13.5V8.207l-.146.147a.5.5 0 1 1-.708-.708zm.707.707L5 7.207V13.5a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5V7.207z"/>
                             </svg>
-                            Comparable Properties
+                            Comparables Pool
                             <span class="badge bg-primary ms-2">@Model.Comparables.Count</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle ms-2 text-muted" viewBox="0 0 16 16" data-bs-toggle="tooltip" data-bs-placement="top" title="All available comparables for this property. Select specific comps when creating evaluations.">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                                <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                            </svg>
                         </h4>
                         <div>
                             <button class="btn btn-sm btn-primary me-2" type="button" data-bs-toggle="modal" data-bs-target="#addComparableModal">
@@ -190,6 +194,7 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>Address</th>
+                                        <th>Type</th>
                                         <th>Price</th>
                                         <th>Sqft</th>
                                         <th>Bed/Bath</th>
@@ -206,6 +211,11 @@
                                             <td>
                                                 <div class="fw-bold">@comp.Address</div>
                                                 <small class="text-muted">@comp.City, @comp.State @comp.ZipCode</small>
+                                            </td>
+                                            <td>
+                                                <span class="badge @(comp.ComparableType.ToString() == "Arv" ? "bg-info" : "bg-warning")">
+                                                    @comp.ComparableType
+                                                </span>
                                             </td>
                                             <td>
                                                 @if (comp.Price.HasValue)
@@ -363,9 +373,10 @@
     </div>
 </div>
 
-<partial name="_AddComparableModal" model="Model" />
-<partial name="_CreateEvaluationModal" model="Model" />
-<partial name="_EvaluationHistoryModal" model="Model" />
+<partial name="Modals/_AddComparableModal" model="Model" />
+<partial name="Modals/_CreateEvaluationModal" model="Model" />
+<partial name="Modals/_EvaluationHistoryModal" model="Model" />
+<partial name="Modals/_EvaluationPromptModal" />
 
 @section Styles {
     <style>

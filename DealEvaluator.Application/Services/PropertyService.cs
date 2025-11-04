@@ -4,6 +4,7 @@ using DealEvaluator.Application.DTOs.Evaluation;
 using DealEvaluator.Application.DTOs.Property;
 using DealEvaluator.Application.Interfaces;
 using DealEvaluator.Domain.Entities;
+using System.Text.Json;
 
 namespace DealEvaluator.Application.Services;
 
@@ -16,15 +17,18 @@ public class PropertyService : IPropertyService
     private readonly IPropertyRepository _propertyRepository;
     private readonly IEvaluationRepository _evaluationRepository;
     private readonly IMapper _mapper;
+    private readonly IHttpClientFactory _httpClientFactory;
 
     public PropertyService(
         IPropertyRepository propertyRepository,
         IEvaluationRepository evaluationRepository,
-        IMapper mapper)
+        IMapper mapper,
+        IHttpClientFactory httpClientFactory)
     {
         _propertyRepository = propertyRepository;
         _evaluationRepository = evaluationRepository;
         _mapper = mapper;
+        _httpClientFactory = httpClientFactory;
     }
 
     public async Task<PropertyDto> CreatePropertyAsync(CreatePropertyDto dto, string userId)
@@ -49,8 +53,41 @@ public class PropertyService : IPropertyService
         property.UserId = userId;
         property.CreatedAt = DateTime.UtcNow;
 
+        // Geocode the address to get coordinates
+        var (latitude, longitude) = await GeocodeAddressAsync(dto.Address, dto.City, dto.State);
+        property.Latitude = latitude;
+        property.Longitude = longitude;
+
         await _propertyRepository.AddAsync(property);
         await _propertyRepository.SaveChangesAsync();
+
+        // Create placeholder initial evaluation if RepairCost is provided
+        if (dto.RepairCost.HasValue)
+        {
+            const int placeholderArv = 500000; // Placeholder ARV until auto-comp feature is implemented
+            int repairCost = dto.RepairCost.Value;
+
+            // Calculate 70% Rule metrics
+            int maxOffer = (int)(placeholderArv * 0.7) - repairCost;
+            int profit = placeholderArv - repairCost - maxOffer;
+            decimal? roi = maxOffer > 0 ? (decimal)profit / maxOffer * 100 : null;
+
+            // Create initial evaluation
+            var evaluation = new Evaluation
+            {
+                PropertyId = property.Id,
+                Arv = placeholderArv,
+                RepairCost = repairCost,
+                MaxOffer = maxOffer,
+                Profit = profit,
+                Roi = roi,
+                CreatedAt = DateTime.UtcNow,
+                Comparables = new List<Comparable>() // Empty list - no comparables yet
+            };
+
+            await _evaluationRepository.AddAsync(evaluation);
+            await _evaluationRepository.SaveChangesAsync();
+        }
 
         return _mapper.Map<PropertyDto>(property);
     }
@@ -95,45 +132,6 @@ public class PropertyService : IPropertyService
         await _propertyRepository.SaveChangesAsync();
     }
 
-    // TODO: Make an actual evaluation logic
-    public async Task<object> EvaluatePropertyDealAsync(int propertyId)
-    {
-        // 1. Get the property from database
-        // var property = await _propertyRepository.GetByIdAsync(propertyId);
-        // if (property == null)
-        //     throw new KeyNotFoundException($"Property with ID {propertyId} not found");
-
-        // 2. Fetch comparable properties (comps) from your repository or Zillow API
-        // var comps = await _comparableRepository.GetComparablesByLocationAsync(property.ZipCode);
-
-        // 3. Calculate ARV (After Repair Value)
-        // var arv = CalculateARV(property, comps);
-
-        // 4. Estimate repair costs based on condition
-        // var repairCost = EstimateRepairCost(property);
-
-        // 5. Calculate investment metrics:
-        //    - Cap Rate = (Net Operating Income / Property Price) * 100
-        //    - Cash on Cash Return
-        //    - ROI
-        //    - Monthly cash flow
-
-        // 6. Save evaluation to database
-        // var evaluation = new Evaluation { PropertyId = propertyId, Arv = arv, ... };
-        // await _evaluationRepository.AddAsync(evaluation);
-
-        // 7. Return results
-        return new
-        {
-            PropertyId = propertyId,
-            Message = "Evaluation logic not yet implemented - add your formulas here!",
-            // ARV = arv,
-            // RepairCost = repairCost,
-            // CapRate = capRate,
-            // etc...
-        };
-    }
-
     public async Task<List<EvaluationDto>> GetPropertyEvaluationsAsync(int propertyId)
     {
         var evaluations = await _evaluationRepository.GetEvaluationsByPropertyIdAsync(propertyId);
@@ -162,19 +160,6 @@ public class PropertyService : IPropertyService
         var comparable = _mapper.Map<Comparable>(dto);
         var createdComparable = await _propertyRepository.CreateComparableAsync(comparable);
         return _mapper.Map<ComparableDto>(createdComparable);
-    }
-
-    public async Task UpdatePropertyCoordinatesAsync(int propertyId, double latitude, double longitude)
-    {
-        var property = await _propertyRepository.GetByIdAsync(propertyId);
-        if (property == null)
-            throw new KeyNotFoundException($"Property with ID {propertyId} not found");
-
-        property.Latitude = latitude;
-        property.Longitude = longitude;
-
-        _propertyRepository.Update(property);
-        await _propertyRepository.SaveChangesAsync();
     }
 
     public async Task<EvaluationDto> CreateEvaluationAsync(CreateEvaluationDto dto)
@@ -219,7 +204,6 @@ public class PropertyService : IPropertyService
             PropertyId = dto.PropertyId,
             Arv = arv,
             RepairCost = repairCost,
-            PurchasePrice = dto.PurchasePrice,
             MaxOffer = maxOffer,
             Profit = profit,
             Roi = roi,
@@ -235,8 +219,47 @@ public class PropertyService : IPropertyService
         return _mapper.Map<EvaluationDto>(evaluation);
     }
 
-    // Private helper methods for calculations
-    // private decimal CalculateARV(Property property, List<Comparable> comps) { }
-    // private decimal EstimateRepairCost(Property property) { }
-    // private decimal CalculateCapRate(decimal noi, decimal price) { }
+    /// <summary>
+    /// Geocodes an address using OpenStreetMap's Nominatim service
+    /// Returns coordinates (latitude, longitude) or null if geocoding fails
+    /// </summary>
+    private async Task<(double? Latitude, double? Longitude)> GeocodeAddressAsync(string address, string city, string state)
+    {
+        try
+        {
+            var fullAddress = $"{address}, {city}, {state}";
+            var geocodeUrl = $"https://nominatim.openstreetmap.org/search?format=json&q={Uri.EscapeDataString(fullAddress)}";
+
+            var httpClient = _httpClientFactory.CreateClient();
+            httpClient.DefaultRequestHeaders.Add("User-Agent", "DealEvaluator/1.0"); // API requires user agent
+
+            var response = await httpClient.GetAsync(geocodeUrl);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+            var results = JsonSerializer.Deserialize<List<NominatimResult>>(json);
+
+            if (results is not { Count: > 0 }) 
+                return (null, null);
+            
+            var result = results[0];
+            if (double.TryParse(result.lat, out var lat) && double.TryParse(result.lon, out var lon))
+            {
+                return (lat, lon);
+            }
+
+            return (null, null);
+        }
+        catch (Exception)
+        {
+            return (null, null);
+        }
+    }
+
+    // DTO for Nominatim API response
+    private class NominatimResult
+    {
+        public string lat { get; set; } = string.Empty;
+        public string lon { get; set; } = string.Empty;
+    }
 }

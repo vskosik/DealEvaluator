@@ -42,19 +42,6 @@ public class Program
         
         app.UseSwagger();
         app.UseSwaggerUI();
-        
-        // Apply DB Migration
-        // app.ApplyMigrations();
-        
-        // Seeding DB with test data
-        /*using (var scope = app.Services.CreateScope())
-        {
-            var context = scope.ServiceProvider.GetRequiredService<DealEvaluatorContext>();
-            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-
-            await SeedData.SeedDatabase(context, userManager, roleManager);
-        }*/
 
         app.MapIdentityApi<User>();
         

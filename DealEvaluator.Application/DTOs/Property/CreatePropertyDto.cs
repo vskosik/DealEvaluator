@@ -18,4 +18,7 @@ public class CreatePropertyDto
     public int? Bathrooms { get; set; }
     public int? LotSizeSqft { get; set; }
     public int? YearBuilt { get; set; }
+
+    // For initial evaluation
+    public int? RepairCost { get; set; }
 }
