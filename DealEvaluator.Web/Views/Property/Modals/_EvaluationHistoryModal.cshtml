@@ -1,7 +1,7 @@
 @model DealEvaluator.Web.Models.PropertyDetailsViewModel
 
 <div class="modal fade" id="evaluationHistoryModal" tabindex="-1" aria-labelledby="evaluationHistoryModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                 <h5 class="modal-title fw-bold" id="evaluationHistoryModalLabel">
@@ -11,116 +11,267 @@
                         <path d="M7.5 3a.5.5 0 0 1 .5.5v5.21l3.248 1.856a.5.5 0 0 1-.496.868l-3.5-2A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5"/>
                     </svg>
                     Evaluation History
+                    @if (Model.EvaluationHistory.Any())
+                    {
+                        <span class="badge bg-white bg-opacity-25 ms-2">@Model.EvaluationHistory.Count</span>
+                    }
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body p-0">
+            <div class="modal-body p-4" style="background-color: #f8f9fa;">
                 @if (Model.EvaluationHistory.Any())
                 {
-                    <div class="list-group list-group-flush">
-                        @foreach (var evaluation in Model.EvaluationHistory)
+                    <div class="accordion" id="evaluationHistoryAccordion">
+                        @for (int i = 0; i < Model.EvaluationHistory.Count; i++)
                         {
-                            <div class="list-group-item">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <div>
-                                        <h6 class="mb-1 fw-bold">@evaluation.CreatedAt.ToString("MMMM d, yyyy")</h6>
-                                        <small class="text-muted">@evaluation.CreatedAt.ToString("h:mm tt")</small>
-                                    </div>
-                                    <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#modal-eval-@evaluation.Id">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-eye me-1" viewBox="0 0 16 16">
-                                            <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z"/>
-                                            <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0"/>
-                                        </svg>
-                                        View Details
+                            var evaluation = Model.EvaluationHistory[i];
+                            var isFirst = i == 0;
+                            var accordionId = $"accordion-eval-{evaluation.Id}";
+
+                            <div class="card border-0 shadow-sm mb-3">
+                                <div class="card-header bg-white border-0 p-0">
+                                    <button class="btn btn-link text-decoration-none w-100 text-start p-4 @(isFirst ? "" : "collapsed")"
+                                            type="button"
+                                            data-bs-toggle="collapse"
+                                            data-bs-target="#@accordionId"
+                                            aria-expanded="@(isFirst ? "true" : "false")"
+                                            aria-controls="@accordionId">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1 fw-bold text-dark">
+                                                    @evaluation.CreatedAt.ToString("MMMM d, yyyy")
+                                                </h6>
+                                                <small class="text-muted">@evaluation.CreatedAt.ToString("h:mm tt")</small>
+                                            </div>
+
+                                            <!-- Quick Stats -->
+                                            <div class="d-flex gap-3 align-items-center">
+                                                @if (evaluation.MaxOffer.HasValue)
+                                                {
+                                                    <div class="text-center d-none d-md-block">
+                                                        <small class="text-muted d-block">Max Offer</small>
+                                                        <strong class="text-primary">$@evaluation.MaxOffer.Value.ToString("N0")</strong>
+                                                    </div>
+                                                }
+                                                @if (evaluation.Profit.HasValue)
+                                                {
+                                                    <div class="text-center d-none d-md-block">
+                                                        <small class="text-muted d-block">Profit</small>
+                                                        <strong class="text-success">$@evaluation.Profit.Value.ToString("N0")</strong>
+                                                    </div>
+                                                }
+                                                @if (evaluation.Roi.HasValue)
+                                                {
+                                                    <div class="text-center d-none d-lg-block">
+                                                        <small class="text-muted d-block">ROI</small>
+                                                        <strong class="text-dark">@evaluation.Roi.Value.ToString("N2")%</strong>
+                                                    </div>
+                                                }
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-chevron-down text-muted" viewBox="0 0 16 16">
+                                                    <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"/>
+                                                </svg>
+                                            </div>
+                                        </div>
                                     </button>
                                 </div>
 
-                                <!-- Summary stats -->
-                                <div class="d-flex gap-3 mb-2 flex-wrap">
-                                    @if (evaluation.Arv.HasValue)
-                                    {
-                                        <span class="badge bg-success">ARV: $@evaluation.Arv.Value.ToString("N0")</span>
-                                    }
-                                    @if (evaluation.MaxOffer.HasValue)
-                                    {
-                                        <span class="badge bg-primary">Max Offer: $@evaluation.MaxOffer.Value.ToString("N0")</span>
-                                    }
-                                    @if (evaluation.Profit.HasValue)
-                                    {
-                                        <span class="badge bg-success">Profit: $@evaluation.Profit.Value.ToString("N0")</span>
-                                    }
-                                    @if (evaluation.Roi.HasValue)
-                                    {
-                                        <span class="badge bg-dark">ROI: @evaluation.Roi.Value.ToString("N2")%</span>
-                                    }
-                                    @if (evaluation.CapRate.HasValue)
-                                    {
-                                        <span class="badge bg-info">Cap Rate: @evaluation.CapRate%</span>
-                                    }
-                                    @if (evaluation.CashOnCash.HasValue)
-                                    {
-                                        <span class="badge bg-warning text-dark">CoC: @evaluation.CashOnCash%</span>
-                                    }
-                                </div>
-
-                                <!-- Collapsible details -->
-                                <div class="collapse mt-3" id="modal-eval-@evaluation.Id">
-                                    <div class="card card-body bg-light">
-                                        <div class="row g-3">
+                                <div id="@accordionId" class="accordion-collapse collapse @(isFirst ? "show" : "")" data-bs-parent="#evaluationHistoryAccordion">
+                                    <div class="card-body p-4 pt-0">
+                                        <!-- Fix & Flip Section -->
+                                        <h6 class="fw-bold mb-3 text-dark">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-hammer me-2" viewBox="0 0 16 16">
+                                                <path d="M9.972 2.508a.5.5 0 0 0-.16-.556l-.178-.129a5 5 0 0 0-2.076-.783C6.215.862 4.504 1.229 2.84 3.133H1.786a.5.5 0 0 0-.354.147L.146 4.567a.5.5 0 0 0 0 .706l2.571 2.579a.5.5 0 0 0 .708 0l1.286-1.29a.5.5 0 0 0 .146-.353V5.57l8.387 8.873A.5.5 0 0 0 14 14.5l1.5-1.5a.5.5 0 0 0 .017-.689l-9.129-8.63c.747-.456 1.772-.839 3.112-.839a.5.5 0 0 0 .472-.334"/>
+                                            </svg>
+                                            Fix & Flip
+                                        </h6>
+                                        <div class="row g-3 mb-4">
                                             @if (evaluation.Arv.HasValue)
                                             {
-                                                <div class="col-md-6">
-                                                    <small class="text-muted d-block">After Repair Value (ARV)</small>
-                                                    <strong>$@evaluation.Arv.Value.ToString("N0")</strong>
+                                                <div class="col-md-3 col-6">
+                                                    <div class="p-3 bg-light rounded">
+                                                        <small class="text-muted d-block mb-1">ARV</small>
+                                                        <strong class="fs-5">$@evaluation.Arv.Value.ToString("N0")</strong>
+                                                    </div>
                                                 </div>
                                             }
                                             @if (evaluation.RepairCost.HasValue)
                                             {
-                                                <div class="col-md-6">
-                                                    <small class="text-muted d-block">Repair Cost</small>
-                                                    <strong>$@evaluation.RepairCost.Value.ToString("N0")</strong>
+                                                <div class="col-md-3 col-6">
+                                                    <div class="p-3 bg-light rounded">
+                                                        <small class="text-muted d-block mb-1">Repair Cost</small>
+                                                        <strong class="fs-5">$@evaluation.RepairCost.Value.ToString("N0")</strong>
+                                                    </div>
                                                 </div>
                                             }
                                             @if (evaluation.MaxOffer.HasValue)
                                             {
-                                                <div class="col-md-6">
-                                                    <small class="text-muted d-block">Max Offer (70% Rule)</small>
-                                                    <strong>$@evaluation.MaxOffer.Value.ToString("N0")</strong>
+                                                <div class="col-md-3 col-6">
+                                                    <div class="p-3 bg-primary bg-opacity-10 rounded">
+                                                        <small class="text-muted d-block mb-1">Max Offer</small>
+                                                        <strong class="fs-5 text-primary">$@evaluation.MaxOffer.Value.ToString("N0")</strong>
+                                                    </div>
                                                 </div>
                                             }
                                             @if (evaluation.Profit.HasValue)
                                             {
-                                                <div class="col-md-6">
-                                                    <small class="text-muted d-block">Potential Profit</small>
-                                                    <strong class="text-success">$@evaluation.Profit.Value.ToString("N0")</strong>
+                                                <div class="col-md-3 col-6">
+                                                    <div class="p-3 bg-success bg-opacity-10 rounded">
+                                                        <small class="text-muted d-block mb-1">Profit</small>
+                                                        <strong class="fs-5 text-success">$@evaluation.Profit.Value.ToString("N0")</strong>
+                                                    </div>
                                                 </div>
                                             }
                                             @if (evaluation.Roi.HasValue)
                                             {
-                                                <div class="col-md-6">
-                                                    <small class="text-muted d-block">Return on Investment</small>
-                                                    <strong>@evaluation.Roi.Value.ToString("N2")%</strong>
+                                                <div class="col-md-3 col-6">
+                                                    <div class="p-3 bg-light rounded">
+                                                        <small class="text-muted d-block mb-1">ROI</small>
+                                                        <strong class="fs-5">@evaluation.Roi.Value.ToString("N2")%</strong>
+                                                    </div>
                                                 </div>
                                             }
+                                        </div>
+
+                                        <!-- Buy & Hold Section -->
+                                        <h6 class="fw-bold mb-3 text-dark">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-key me-2" viewBox="0 0 16 16">
+                                                <path d="M0 8a4 4 0 0 1 7.465-2H14a.5.5 0 0 1 .354.146l1.5 1.5a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0L13 9.207l-.646.647a.5.5 0 0 1-.708 0L11 9.207l-.646.647a.5.5 0 0 1-.708 0L9 9.207l-.646.647A.5.5 0 0 1 8 10h-.535A4 4 0 0 1 0 8m4-3a3 3 0 1 0 2.712 4.285A.5.5 0 0 1 7.163 9h.63l.853-.854a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.793-.793-1-1h-6.63a.5.5 0 0 1-.451-.285A3 3 0 0 0 4 5"/>
+                                                <path d="M4 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                                            </svg>
+                                            Buy & Hold
+                                        </h6>
+                                        <div class="row g-3 mb-4">
                                             @if (evaluation.RentalIncome.HasValue)
                                             {
-                                                <div class="col-md-6">
-                                                    <small class="text-muted d-block">Monthly Rental Income</small>
-                                                    <strong>$@evaluation.RentalIncome.Value.ToString("N0")</strong>
+                                                <div class="col-md-4 col-6">
+                                                    <div class="p-3 bg-light rounded">
+                                                        <small class="text-muted d-block mb-1">Monthly Rent</small>
+                                                        <strong class="fs-5">$@evaluation.RentalIncome.Value.ToString("N0")</strong>
+                                                    </div>
+                                                </div>
+                                                @if (evaluation.CapRate.HasValue)
+                                                {
+                                                    <div class="col-md-4 col-6">
+                                                        <div class="p-3 bg-light rounded">
+                                                            <small class="text-muted d-block mb-1">Cap Rate</small>
+                                                            <strong class="fs-5">@evaluation.CapRate%</strong>
+                                                        </div>
+                                                    </div>
+                                                }
+                                                @if (evaluation.CashOnCash.HasValue)
+                                                {
+                                                    <div class="col-md-4 col-6">
+                                                        <div class="p-3 bg-light rounded">
+                                                            <small class="text-muted d-block mb-1">Cash-on-Cash</small>
+                                                            <strong class="fs-5">@evaluation.CashOnCash%</strong>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <div class="col-12">
+                                                    <div class="alert alert-warning mb-0">
+                                                        <small>No rental metrics available for this evaluation.</small>
+                                                    </div>
                                                 </div>
                                             }
-                                            @if (evaluation.CapRate.HasValue)
+                                        </div>
+
+                                        <!-- Comparables Used -->
+                                        <div class="mt-3 pt-3 border-top">
+                                            <h6 class="fw-bold mb-3">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-houses me-1" viewBox="0 0 16 16">
+                                                    <path d="M5.793 1a1 1 0 0 1 1.414 0l.647.646a.5.5 0 1 1-.708.708L6.5 1.707 2 6.207V12.5a.5.5 0 0 0 .5.5.5.5 0 0 1 0 1A1.5 1.5 0 0 1 1 12.5V7.207l-.146.147a.5.5 0 0 1-.708-.708zm3 1a1 1 0 0 1 1.414 0L12 3.793V2.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v3.293l1.854 1.853a.5.5 0 0 1-.708.708L15 8.207V13.5a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 4 13.5V8.207l-.146.147a.5.5 0 1 1-.708-.708zm.707.707L5 7.207V13.5a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5V7.207z"/>
+                                                </svg>
+                                                Comparables Used
+                                                @if (evaluation.Comparables != null && evaluation.Comparables.Any())
+                                                {
+                                                    <span class="badge bg-secondary ms-2">@evaluation.Comparables.Count</span>
+                                                }
+                                            </h6>
+
+                                            @if (evaluation.Comparables != null && evaluation.Comparables.Any())
                                             {
-                                                <div class="col-md-6">
-                                                    <small class="text-muted d-block">Cap Rate</small>
-                                                    <strong>@evaluation.CapRate%</strong>
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm table-hover mb-0">
+                                                        <thead class="table-light">
+                                                            <tr>
+                                                                <th>Address</th>
+                                                                <th>Type</th>
+                                                                <th>Price</th>
+                                                                <th>Sqft</th>
+                                                                <th>Bed/Bath</th>
+                                                                <th>Sale Date</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var comp in evaluation.Comparables)
+                                                            {
+                                                                <tr>
+                                                                    <td>
+                                                                        <div class="fw-bold small">@comp.Address</div>
+                                                                        <small class="text-muted">@comp.City, @comp.State</small>
+                                                                    </td>
+                                                                    <td>
+                                                                        <span class="badge badge-sm @(comp.ComparableType.ToString() == "Arv" ? "bg-info" : "bg-warning")">
+                                                                            @comp.ComparableType
+                                                                        </span>
+                                                                    </td>
+                                                                    <td>
+                                                                        @if (comp.Price.HasValue)
+                                                                        {
+                                                                            <span class="text-success fw-bold">$@comp.Price.Value.ToString("N0")</span>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <span class="text-muted">N/A</span>
+                                                                        }
+                                                                    </td>
+                                                                    <td>
+                                                                        @if (comp.Sqft.HasValue)
+                                                                        {
+                                                                            <span>@comp.Sqft.Value.ToString("N0")</span>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <span class="text-muted">N/A</span>
+                                                                        }
+                                                                    </td>
+                                                                    <td>
+                                                                        @if (comp.Bedrooms.HasValue || comp.Bathrooms.HasValue)
+                                                                        {
+                                                                            <span>@comp.Bedrooms / @comp.Bathrooms</span>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <span class="text-muted">N/A</span>
+                                                                        }
+                                                                    </td>
+                                                                    <td>
+                                                                        @if (comp.SaleDate.HasValue)
+                                                                        {
+                                                                            <span class="small">@comp.SaleDate.Value.ToString("MMM d, yyyy")</span>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <span class="text-muted">N/A</span>
+                                                                        }
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
                                                 </div>
                                             }
-                                            @if (evaluation.CashOnCash.HasValue)
+                                            else
                                             {
-                                                <div class="col-md-6">
-                                                    <small class="text-muted d-block">Cash-on-Cash Return</small>
-                                                    <strong>@evaluation.CashOnCash%</strong>
+                                                <div class="alert alert-info mb-0">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle me-2" viewBox="0 0 16 16">
+                                                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                                                        <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                                                    </svg>
+                                                    <small><strong>No comparables selected.</strong> This is a placeholder evaluation.</small>
                                                 </div>
                                             }
                                         </div>
@@ -132,15 +283,16 @@
                 }
                 else
                 {
-                    <div class="p-5 text-center text-muted">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-inbox mb-3" viewBox="0 0 16 16">
+                    <div class="text-center py-5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-inbox text-muted mb-3" viewBox="0 0 16 16">
                             <path d="M4.98 4a.5.5 0 0 0-.39.188L1.54 8H6a.5.5 0 0 1 .5.5 1.5 1.5 0 1 0 3 0A.5.5 0 0 1 10 8h4.46l-3.05-3.812A.5.5 0 0 0 11.02 4zm9.954 5H10.45a2.5 2.5 0 0 1-4.9 0H1.066l.32 2.562a.5.5 0 0 0 .497.438h12.234a.5.5 0 0 0 .496-.438zM3.809 3.563A1.5 1.5 0 0 1 4.981 3h6.038a1.5 1.5 0 0 1 1.172.563l3.7 4.625a.5.5 0 0 1 .105.374l-.39 3.124A1.5 1.5 0 0 1 14.117 13H1.883a1.5 1.5 0 0 1-1.489-1.314l-.39-3.124a.5.5 0 0 1 .106-.374z"/>
                         </svg>
-                        <p class="mb-0">No previous evaluations found.</p>
+                        <h5 class="text-muted">No Evaluation History</h5>
+                        <p class="text-muted mb-0">Create your first evaluation to see it appear here.</p>
                     </div>
                 }
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer bg-white">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>

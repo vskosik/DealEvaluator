@@ -262,13 +262,113 @@
             </div>
         </div>
 
-        <!-- Visual connector to comparables section -->
+        <!-- Comparables Used in This Evaluation -->
+        <div class="px-4 pb-4" style="background: rgba(255, 255, 255, 0.95); color: #212529;">
+            <hr class="my-0 mb-3">
+            <h6 class="fw-bold mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-check2-square me-2" viewBox="0 0 16 16">
+                    <path d="M3 14.5A1.5 1.5 0 0 1 1.5 13V3A1.5 1.5 0 0 1 3 1.5h8a.5.5 0 0 1 0 1H3a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5V8a.5.5 0 0 1 1 0v5a1.5 1.5 0 0 1-1.5 1.5z"/>
+                    <path d="m8.354 10.354 7-7a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0"/>
+                </svg>
+                Comparables Used in This Evaluation
+                @if (Model.LatestEvaluation.Comparables != null && Model.LatestEvaluation.Comparables.Any())
+                {
+                    <span class="badge bg-secondary ms-2">@Model.LatestEvaluation.Comparables.Count</span>
+                }
+            </h6>
+
+            @if (Model.LatestEvaluation.Comparables != null && Model.LatestEvaluation.Comparables.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Address</th>
+                                <th>Type</th>
+                                <th>Price</th>
+                                <th>Sqft</th>
+                                <th>Bed/Bath</th>
+                                <th>Sale Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var comp in Model.LatestEvaluation.Comparables)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold small">@comp.Address</div>
+                                        <small class="text-muted">@comp.City, @comp.State</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-sm @(comp.ComparableType.ToString() == "Arv" ? "bg-info" : "bg-warning")">
+                                            @comp.ComparableType
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if (comp.Price.HasValue)
+                                        {
+                                            <span class="fw-bold text-success">$@comp.Price.Value.ToString("N0")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">N/A</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (comp.Sqft.HasValue)
+                                        {
+                                            <span>@comp.Sqft.Value.ToString("N0") sf</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">N/A</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (comp.Bedrooms.HasValue || comp.Bathrooms.HasValue)
+                                        {
+                                            <span>@comp.Bedrooms / @comp.Bathrooms</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">N/A</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (comp.SaleDate.HasValue)
+                                        {
+                                            <span class="small">@comp.SaleDate.Value.ToString("MMM d, yyyy")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">N/A</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-warning mb-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-triangle me-2" viewBox="0 0 16 16">
+                        <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z"/>
+                        <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
+                    </svg>
+                    <strong>No comparables selected.</strong> This is a placeholder evaluation. Create a new evaluation and select comparables for accurate analysis.
+                </div>
+            }
+        </div>
+
+        <!-- Visual connector to comparables pool section -->
         <div class="text-center py-3" style="background: rgba(255, 255, 255, 0.95); color: #212529;">
             <small class="text-muted d-flex align-items-center justify-content-center">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-down me-2" viewBox="0 0 16 16">
                     <path fill-rule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1"/>
                 </svg>
-                Based on comparable properties below
+                View full comparables pool below
             </small>
         </div>
     </div>
