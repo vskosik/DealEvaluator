@@ -5,28 +5,28 @@ using DealEvaluator.Application.DTOs.Property;
 using DealEvaluator.Application.Interfaces;
 using DealEvaluator.Domain.Entities;
 using System.Text.Json;
+using DealEvaluator.Domain.Enums;
 
 namespace DealEvaluator.Application.Services;
 
-/// <summary>
-/// Service layer for property business logic
-/// This is where your evaluation algorithms and business rules live
-/// </summary>
 public class PropertyService : IPropertyService
 {
     private readonly IPropertyRepository _propertyRepository;
     private readonly IEvaluationRepository _evaluationRepository;
+    private readonly ICompService _compService;
     private readonly IMapper _mapper;
     private readonly IHttpClientFactory _httpClientFactory;
 
     public PropertyService(
         IPropertyRepository propertyRepository,
         IEvaluationRepository evaluationRepository,
+        ICompService compService,
         IMapper mapper,
         IHttpClientFactory httpClientFactory)
     {
         _propertyRepository = propertyRepository;
         _evaluationRepository = evaluationRepository;
+        _compService = compService;
         _mapper = mapper;
         _httpClientFactory = httpClientFactory;
     }
@@ -61,32 +61,81 @@ public class PropertyService : IPropertyService
         await _propertyRepository.AddAsync(property);
         await _propertyRepository.SaveChangesAsync();
 
-        // Create placeholder initial evaluation if RepairCost is provided
-        if (dto.RepairCost.HasValue)
+        if (!dto.RepairCost.HasValue) 
+            return _mapper.Map<PropertyDto>(property);
+        
+        try
         {
-            const int placeholderArv = 500000; // Placeholder ARV until auto-comp feature is implemented
+            // Try to find comparables automatically
+            var zillowComps = await _compService.FindComparablesAsync(
+                property.PropertyType,
+                property.Bedrooms,
+                property.Bathrooms,
+                property.Sqft,
+                property.ZipCode);
+
+            // Convert ZillowProperties to Comparable entities
+            var comparables = new List<Comparable>();
+            foreach (var zillowComp in zillowComps)
+            {
+                // Parse Zillow's combined address string: "{street}, {city}, {state} {zip}"
+                var addressParts = ParseZillowAddress(zillowComp.Address);
+
+                var comparable = new Comparable
+                {
+                    PropertyId = property.Id,
+                    Address = addressParts.Street,
+                    City = addressParts.City,
+                    State = addressParts.State,
+                    ZipCode = addressParts.ZipCode,
+                    Price = zillowComp.Price,
+                    Sqft = zillowComp.LivingArea,
+                    Bedrooms = zillowComp.Bedrooms,
+                    Bathrooms = (int?)zillowComp.Bathrooms,
+                    Latitude = zillowComp.Latitude,
+                    Longitude = zillowComp.Longitude,
+                    Source = "Zillow",
+                    ComparableType = ComparableType.Arv
+                };
+
+                comparables.Add(comparable);
+            }
+
+            // Calculate ARV from comparable prices
+            var comparablePrices = comparables
+                .Where(c => c.Price.HasValue && c.Price.Value > 0)
+                .Select(c => c.Price!.Value)
+                .ToList();
+
+            int arv = (int)comparablePrices.Average();
             int repairCost = dto.RepairCost.Value;
 
             // Calculate 70% Rule metrics
-            int maxOffer = (int)(placeholderArv * 0.7) - repairCost;
-            int profit = placeholderArv - repairCost - maxOffer;
+            int maxOffer = (int)(arv * 0.7) - repairCost;
+            int profit = arv - repairCost - maxOffer;
             decimal? roi = maxOffer > 0 ? (decimal)profit / maxOffer * 100 : null;
 
-            // Create initial evaluation
+            // Create initial evaluation with auto-found comparables
             var evaluation = new Evaluation
             {
                 PropertyId = property.Id,
-                Arv = placeholderArv,
+                Arv = arv,
                 RepairCost = repairCost,
                 MaxOffer = maxOffer,
                 Profit = profit,
                 Roi = roi,
                 CreatedAt = DateTime.UtcNow,
-                Comparables = new List<Comparable>() // Empty list - no comparables yet
+                Comparables = comparables
             };
 
             await _evaluationRepository.AddAsync(evaluation);
             await _evaluationRepository.SaveChangesAsync();
+        }
+        catch (InvalidOperationException)
+        {
+            // If we can't find enough comparables, don't create an evaluation
+            // User can create one manually later
+            // Silently continue - property was still created successfully
         }
 
         return _mapper.Map<PropertyDto>(property);
@@ -254,6 +303,38 @@ public class PropertyService : IPropertyService
         {
             return (null, null);
         }
+    }
+
+    /// <summary>
+    /// Parses Zillow's combined address format: "{street}, {city}, {state} {zip}"
+    /// Example: "9218 Success Ave, Los Angeles, CA 90002"
+    /// </summary>
+    private (string Street, string City, string State, string ZipCode) ParseZillowAddress(string? fullAddress)
+    {
+        if (string.IsNullOrWhiteSpace(fullAddress))
+            return ("", "", "", "");
+
+        var parts = fullAddress.Split(',').Select(p => p.Trim()).ToArray();
+
+        if (parts.Length >= 3)
+        {
+            // Last part should have "STATE ZIP" format
+            var lastPart = parts[^1]; //parts[parts.Length - 1]
+            var stateZipMatch = System.Text.RegularExpressions.Regex.Match(lastPart, @"([A-Z]{2})\s+(\d{5})");
+
+            if (stateZipMatch.Success)
+            {
+                return (
+                    Street: parts[0],
+                    City: parts[1],
+                    State: stateZipMatch.Groups[1].Value,
+                    ZipCode: stateZipMatch.Groups[2].Value
+                );
+            }
+        }
+
+        // If parsing fails, return the full address as street
+        return (Street: fullAddress, City: "", State: "", ZipCode: "");
     }
 
     // DTO for Nominatim API response
