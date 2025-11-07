@@ -16,15 +16,15 @@ public class MarketDataRepository : DbRepository<MarketData>, IMarketDataReposit
         _marketDatas =  _context.MarketData;
     }
 
-    public async Task<MarketData?> GetByZipCodeAsync(string zipCode)
+    public async Task<MarketData?> GetByZipCodeAndKeywordsAsync(string zipCode, string keywords)
     {
         return await _marketDatas
-            .FirstOrDefaultAsync(m => m.ZipCode == zipCode);
+            .FirstOrDefaultAsync(m => m.ZipCode == zipCode && m.Keywords == keywords);
     }
 
     public async Task UpsertAsync(MarketData marketData)
     {
-        var existing = await GetByZipCodeAsync(marketData.ZipCode);
+        var existing = await GetByZipCodeAndKeywordsAsync(marketData.ZipCode, marketData.Keywords);
 
         if (existing != null)
         {
@@ -45,15 +45,13 @@ public class MarketDataRepository : DbRepository<MarketData>, IMarketDataReposit
         await _context.SaveChangesAsync();
     }
 
-    public async Task<bool> IsFreshDataAvailableAsync(string zipCode)
+    public async Task<bool> IsFreshDataAvailableAsync(string zipCode, string keywords)
     {
-        var data = await GetByZipCodeAsync(zipCode);
+        var data = await GetByZipCodeAndKeywordsAsync(zipCode, keywords);
 
         if (data == null)
             return false;
 
-        // TODO: Implement expiration logic when ExpiresAt is properly set
-        // For now, consider data fresh if it exists
         return data.ExpiresAt == null || data.ExpiresAt > DateTime.UtcNow;
     }
 }

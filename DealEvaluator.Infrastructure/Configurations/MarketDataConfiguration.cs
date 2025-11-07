@@ -24,6 +24,12 @@ public class MarketDataConfiguration : IEntityTypeConfiguration<MarketData>
         builder.Property(x => x.RawJson)
             .IsRequired();
 
+        builder.Property(x => x.Keywords)
+            .IsRequired(false)
+            .HasDefaultValue("");
+        
+        builder.HasIndex(x => new { x.ZipCode, x.Keywords }).IsUnique();
+
         builder.Property(x => x.FetchedAt)
             .IsRequired()
             .HasDefaultValueSql("GETUTCDATE()");

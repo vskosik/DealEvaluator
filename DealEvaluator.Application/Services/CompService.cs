@@ -26,14 +26,15 @@ public class CompService : ICompService
         int? bedrooms,
         int? bathrooms,
         int? sqft,
-        string zipCode)
+        string zipCode,
+        string? subjectPropertyAddress = null)
     {
         _logger.LogInformation(
-            "Finding comparables for {PropertyType} with {Beds}bd/{Baths}ba, {Sqft}sqft in {ZipCode}",
-            propertyType, bedrooms, bathrooms, sqft, zipCode);
+            "Finding comparables for {PropertyType} with {Beds}bd/{Baths}ba, {Sqft}sqft in {ZipCode}, excluding address: {subjectPropertyAddress}",
+            propertyType, bedrooms, bathrooms, sqft, zipCode, subjectPropertyAddress);
 
-        // Get market data for the zip code (already filtered to RecentlySold, last 12 months)
-        var marketData = await _marketDataService.GetMarketDataForZipCodeAsync(zipCode);
+        // Get market data for the zip code and ARV keywords
+        var marketData = await _marketDataService.GetMarketDataForZipCodeAsync(zipCode, "renovated");
 
         if (marketData == null || marketData.Count == 0)
         {
@@ -43,6 +44,14 @@ public class CompService : ICompService
         // Filter by property type (must match)
         var propertyTypeFiltered = FilterByPropertyType(marketData, propertyType);
 
+        // Exclude subject property if address provided
+        if (!string.IsNullOrWhiteSpace(subjectPropertyAddress))
+        {
+            propertyTypeFiltered = propertyTypeFiltered.Where(p => 
+                    !string.Equals(p.Address, subjectPropertyAddress, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+        
         if (propertyTypeFiltered.Count == 0)
         {
             throw new InvalidOperationException(
@@ -94,18 +103,6 @@ public class CompService : ICompService
     }
 
     /// <summary>
-    /// Filters properties by property type
-    /// </summary>
-    private List<ZillowProperty> FilterByPropertyType(List<ZillowProperty> properties, PropertyTypes propertyType)
-    {
-        var targetType = MapPropertyTypeToZillowType(propertyType);
-        return properties
-            .Where(p => p.PropertyType != null &&
-                        p.PropertyType.Equals(targetType, StringComparison.OrdinalIgnoreCase))
-            .ToList();
-    }
-
-    /// <summary>
     /// Finds properties matching bed/bath/sqft criteria with specified tolerances
     /// </summary>
     private List<ZillowProperty> FindMatchingProperties(
@@ -153,6 +150,18 @@ public class CompService : ICompService
         }
 
         return matches;
+    }
+
+    /// <summary>
+    /// Filters properties by property type
+    /// </summary>
+    private List<ZillowProperty> FilterByPropertyType(List<ZillowProperty> properties, PropertyTypes propertyType)
+    {
+        var targetType = MapPropertyTypeToZillowType(propertyType);
+        return properties
+            .Where(p => p.PropertyType != null &&
+                        p.PropertyType.Equals(targetType, StringComparison.OrdinalIgnoreCase))
+            .ToList();
     }
 
     /// <summary>

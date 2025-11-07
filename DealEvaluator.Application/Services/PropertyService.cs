@@ -66,13 +66,15 @@ public class PropertyService : IPropertyService
         
         try
         {
+            var propertyAddress = $"{property.Address}, {property.City}, {property.State} {property.ZipCode}";
             // Try to find comparables automatically
             var zillowComps = await _compService.FindComparablesAsync(
                 property.PropertyType,
                 property.Bedrooms,
                 property.Bathrooms,
                 property.Sqft,
-                property.ZipCode);
+                property.ZipCode,
+                propertyAddress);
 
             // Convert ZillowProperties to Comparable entities
             var comparables = new List<Comparable>();
@@ -309,31 +311,30 @@ public class PropertyService : IPropertyService
     /// Parses Zillow's combined address format: "{street}, {city}, {state} {zip}"
     /// Example: "9218 Success Ave, Los Angeles, CA 90002"
     /// </summary>
-    private (string Street, string City, string State, string ZipCode) ParseZillowAddress(string? fullAddress)
+    private static (string Street, string City, string State, string ZipCode) ParseZillowAddress(string? fullAddress)
     {
         if (string.IsNullOrWhiteSpace(fullAddress))
             return ("", "", "", "");
 
         var parts = fullAddress.Split(',').Select(p => p.Trim()).ToArray();
 
-        if (parts.Length >= 3)
+        if (parts.Length < 3) 
+            return (Street: fullAddress, City: "", State: "", ZipCode: "");
+        
+        // Last part should have "STATE ZIP" format
+        var lastPart = parts[^1];
+        var stateZipMatch = System.Text.RegularExpressions.Regex.Match(lastPart, @"([A-Z]{2})\s+(\d{5})");
+
+        if (stateZipMatch.Success)
         {
-            // Last part should have "STATE ZIP" format
-            var lastPart = parts[^1]; //parts[parts.Length - 1]
-            var stateZipMatch = System.Text.RegularExpressions.Regex.Match(lastPart, @"([A-Z]{2})\s+(\d{5})");
-
-            if (stateZipMatch.Success)
-            {
-                return (
-                    Street: parts[0],
-                    City: parts[1],
-                    State: stateZipMatch.Groups[1].Value,
-                    ZipCode: stateZipMatch.Groups[2].Value
-                );
-            }
+            return (
+                Street: parts[0],
+                City: parts[1],
+                State: stateZipMatch.Groups[1].Value,
+                ZipCode: stateZipMatch.Groups[2].Value
+            );
         }
-
-        // If parsing fails, return the full address as street
+        
         return (Street: fullAddress, City: "", State: "", ZipCode: "");
     }
 

@@ -17,6 +17,7 @@ public interface ICompService
     /// <param name="bathrooms">Number of bathrooms</param>
     /// <param name="sqft">Square footage</param>
     /// <param name="zipCode">Zip code to search in</param>
+    /// <param name="subjectPropertyAddress">Address of the subject property to exclude from results</param>
     /// <returns>List of comparable properties</returns>
     /// <exception cref="InvalidOperationException">If less than 3 comparables found after all criteria widening</exception>
     Task<List<ZillowProperty>> FindComparablesAsync(
@@ -24,5 +25,6 @@ public interface ICompService
         int? bedrooms,
         int? bathrooms,
         int? sqft,
-        string zipCode);
+        string zipCode,
+        string? subjectPropertyAddress = null);
 }
