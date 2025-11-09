@@ -4,6 +4,7 @@ using DealEvaluator.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DealEvaluator.Web.Migrations
 {
     [DbContext(typeof(DealEvaluatorContext))]
-    partial class DealEvaluatorContextModelSnapshot : ModelSnapshot
+    [Migration("20251109033819_FixEvaluationComparableDeleteBehavior")]
+    partial class FixEvaluationComparableDeleteBehavior
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,6 +24,52 @@ namespace DealEvaluator.Web.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("DealEvaluator.Domain.Entities.ApiLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("Endpoint")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RequestData")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ResponseData")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("Success")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PropertyId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ApiLogs");
+                });
 
             modelBuilder.Entity("DealEvaluator.Domain.Entities.Comparable", b =>
                 {
@@ -269,14 +318,6 @@ namespace DealEvaluator.Web.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
-                    b.Property<int>("ApiCallCount")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
-
-                    b.Property<DateTime?>("ApiCallCountResetDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("CompanyName")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -485,6 +526,19 @@ namespace DealEvaluator.Web.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("DealEvaluator.Domain.Entities.ApiLog", b =>
+                {
+                    b.HasOne("DealEvaluator.Domain.Entities.Property", null)
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("DealEvaluator.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction);
                 });
 
             modelBuilder.Entity("DealEvaluator.Domain.Entities.Comparable", b =>

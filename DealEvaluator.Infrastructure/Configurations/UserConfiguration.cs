@@ -11,15 +11,17 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.CompanyName)
             .IsRequired()
             .HasMaxLength(255);
+        
+        builder.Property(u => u.ApiCallCount)
+            .IsRequired()
+            .HasDefaultValue(0);
+        
+        builder.Property(u => u.ApiCallCountResetDate)
+            .IsRequired(false);
 
         builder.HasMany<Property>()
             .WithOne()
             .HasForeignKey(p => p.UserId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        builder.HasMany<ApiLog>()
-            .WithOne()
-            .HasForeignKey(a => a.UserId)
-            .OnDelete(DeleteBehavior.NoAction);
     }
 }

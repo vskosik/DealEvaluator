@@ -10,19 +10,18 @@ using Microsoft.AspNetCore.Mvc;
 namespace DealEvaluator.Web.Controllers;
 
 [Authorize]
-public class PropertyController : Controller
+public class PropertyController : BaseAuthorizedController
 {
     private readonly ILogger<PropertyController> _logger;
-    private readonly IPropertyService _propertyService;
     private readonly IMarketDataService _marketDataService;
 
     public PropertyController(
         ILogger<PropertyController> logger,
         IPropertyService propertyService,
-        IMarketDataService marketDataService)
+        IAuthorizationService authorizationService,
+        IMarketDataService marketDataService) : base(propertyService, authorizationService)
     {
         _logger = logger;
-        _propertyService = propertyService;
         _marketDataService = marketDataService;
     }
 
@@ -33,7 +32,7 @@ public class PropertyController : Controller
         try
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var properties = await _propertyService.GetUserPropertiesAsync(userId);
+            var properties = await PropertyService.GetUserPropertiesAsync(userId);
 
             return View(properties);
         }
@@ -70,7 +69,7 @@ public class PropertyController : Controller
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             // Create property (includes automatic placeholder evaluation if repair cost provided)
-            var property = await _propertyService.CreatePropertyAsync(dto, userId);
+            var property = await PropertyService.CreatePropertyAsync(dto, userId);
 
             // Show success message
             TempData["NotificationType"] = "success";
@@ -94,23 +93,20 @@ public class PropertyController : Controller
     {
         try
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var property = await _propertyService.GetPropertyByIdAsync(id);
-
-            if (property.UserId != userId)
-                return Forbid();
+            var (error, property) = await GetAuthorizedPropertyAsync(id);
+            if (error != null) return error;
 
             // Get all evaluations for this property
-            var evaluations = await _propertyService.GetPropertyEvaluationsAsync(id);
+            var evaluations = await PropertyService.GetPropertyEvaluationsAsync(id);
             var latestEvaluation = evaluations.FirstOrDefault();
 
             // Get all comparables for this property
-            var comparables = await _propertyService.GetComparablesAsync(id);
+            var comparables = await PropertyService.GetComparablesAsync(id);
 
             // Create ViewModel with property, evaluations, and comparables
             var viewModel = new PropertyDetailsViewModel
             {
-                Property = property,
+                Property = property!,
                 LatestEvaluation = latestEvaluation,
                 EvaluationHistory = evaluations.Skip(1).ToList(), // All except the latest
                 Comparables = comparables
@@ -122,7 +118,7 @@ public class PropertyController : Controller
         {
             _logger.LogError(ex, "Error loading property details for ID {PropertyId}", id);
             TempData["NotificationType"] = "error";
-            TempData["Notification"] = "Property not found.";
+            TempData["Notification"] = "Error loading property details.";
             return RedirectToAction("Index");
         }
     }
@@ -133,16 +129,13 @@ public class PropertyController : Controller
     {
         try
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var property = await _propertyService.GetPropertyByIdAsync(id);
+            var (error, property) = await GetAuthorizedPropertyAsync(id);
+            if (error != null) return error;
 
-            if (property.UserId != userId)
-                return Forbid();
-
-            // Map PropertyDto to UpdatePropertyDto for editing
+            // Map Property to UpdatePropertyDto for editing
             var updateDto = new UpdatePropertyDto
             {
-                Id = property.Id,
+                Id = property!.Id,
                 PropertyType = property.PropertyType,
                 PropertyConditions = property.PropertyConditions,
                 Address = property.Address,
@@ -163,7 +156,7 @@ public class PropertyController : Controller
         {
             _logger.LogError(ex, "Error loading property for edit, ID {PropertyId}", id);
             TempData["NotificationType"] = "error";
-            TempData["Notification"] = "Property not found.";
+            TempData["Notification"] = "Error loading property for edit.";
             return RedirectToAction("Index");
         }
     }
@@ -182,15 +175,11 @@ public class PropertyController : Controller
 
         try
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            // Verify ownership
-            var existingProperty = await _propertyService.GetPropertyByIdAsync(dto.Id);
-            if (existingProperty.UserId != userId)
-                return Forbid();
+            var (error, _) = await GetAuthorizedPropertyAsync(dto.Id);
+            if (error != null) return error;
 
             // Update property
-            var updatedProperty = await _propertyService.UpdatePropertyAsync(dto);
+            var updatedProperty = await PropertyService.UpdatePropertyAsync(dto);
 
             TempData["NotificationType"] = "success";
             TempData["Notification"] = "Property updated successfully!";
@@ -214,21 +203,11 @@ public class PropertyController : Controller
     {
         try
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var (error, _) = await GetAuthorizedPropertyAsync(dto.PropertyId);
+            if (error != null) return error;
 
-            var property = await _propertyService.GetPropertyByIdAsync(dto.PropertyId);
-
-            if (property == null)
-            {
-                TempData["NotificationType"] = "error";
-                TempData["Notification"] = "Property not found.";
-                return RedirectToAction("Index");
-            }
-
-            if (property.UserId != userId)
-                return Forbid();
-
-            var evaluation = await _propertyService.CreateEvaluationAsync(dto);
+            // Create evaluation
+            var evaluation = await PropertyService.CreateEvaluationAsync(dto);
 
             TempData["NotificationType"] = "success";
             TempData["Notification"] = $"Evaluation created! Max Offer: ${evaluation.MaxOffer:N0}, Potential Profit: ${evaluation.Profit:N0}";
@@ -258,14 +237,10 @@ public class PropertyController : Controller
     {
         try
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var (error, _) = await GetAuthorizedPropertyAsync(id);
+            if (error != null) return error;
 
-            var property = await _propertyService.GetPropertyByIdAsync(id);
-
-            if (property.UserId != userId)
-                return Forbid();
-
-            await _propertyService.DeletePropertyAsync(id);
+            await PropertyService.DeletePropertyAsync(id);
 
             TempData["NotificationType"] = "success";
             TempData["Notification"] = "Property deleted successfully.";
@@ -288,14 +263,10 @@ public class PropertyController : Controller
     {
         try
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var (error, _) = await GetAuthorizedPropertyAsync(propertyId);
+            if (error != null) return error;
 
-            // Verify property ownership
-            var property = await _propertyService.GetPropertyByIdAsync(propertyId);
-            if (property.UserId != userId)
-                return Forbid();
-
-            await _propertyService.DeleteComparableAsync(comparableId);
+            await PropertyService.DeleteComparableAsync(comparableId);
 
             TempData["NotificationType"] = "success";
             TempData["Notification"] = "Comparable deleted successfully.";
@@ -326,24 +297,11 @@ public class PropertyController : Controller
             _logger.LogInformation("AddComparable called with PropertyId: {PropertyId}, Address: {Address}",
                 dto.PropertyId, dto.Address);
 
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var (error, _) = await GetAuthorizedPropertyAsync(dto.PropertyId);
+            if (error != null)
+                return Json(new { success = false, error = "Unauthorized or property not found" });
 
-            // Verify property ownership
-            var property = await _propertyService.GetPropertyByIdAsync(dto.PropertyId);
-            if (property == null)
-            {
-                _logger.LogError("Property not found: {PropertyId}", dto.PropertyId);
-                return Json(new { success = false, error = "Property not found" });
-            }
-
-            if (property.UserId != userId)
-            {
-                _logger.LogError("Unauthorized access attempt for property {PropertyId} by user {UserId}",
-                    dto.PropertyId, userId);
-                return Json(new { success = false, error = "Unauthorized" });
-            }
-
-            var comparable = await _propertyService.CreateComparableFromMarketDataAsync(dto);
+            var comparable = await PropertyService.CreateComparableFromMarketDataAsync(dto);
 
             _logger.LogInformation("Successfully added comparable {ComparableId} to property {PropertyId}",
                 comparable.Id, dto.PropertyId);

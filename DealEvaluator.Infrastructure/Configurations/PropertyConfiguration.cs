@@ -47,11 +47,6 @@ public class PropertyConfiguration : IEntityTypeConfiguration<Property>
             .IsRequired()
             .HasDefaultValueSql("GETUTCDATE()");
         
-        builder.HasMany<ApiLog>()
-            .WithOne()
-            .HasForeignKey(x => x.PropertyId)
-            .OnDelete(DeleteBehavior.NoAction);
-        
         builder.HasMany<Evaluation>()
             .WithOne()
             .HasForeignKey(x => x.PropertyId)

@@ -32,7 +32,7 @@ public class EvaluationConfiguration : IEntityTypeConfiguration<Evaluation>
             .WithMany()
             .UsingEntity<Dictionary<string, object>>(
                 "EvaluationComparable",
-                j => j.HasOne<Comparable>().WithMany().HasForeignKey("ComparableId").OnDelete(DeleteBehavior.NoAction),
+                j => j.HasOne<Comparable>().WithMany().HasForeignKey("ComparableId").OnDelete(DeleteBehavior.Cascade),
                 j => j.HasOne<Evaluation>().WithMany().HasForeignKey("EvaluationId").OnDelete(DeleteBehavior.NoAction)
             );
     }

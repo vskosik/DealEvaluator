@@ -1,7 +1,9 @@
 using DealEvaluator.Application;
+using DealEvaluator.Application.Authorization;
 using DealEvaluator.Domain.Entities;
 using DealEvaluator.Infrastructure;
 using DealEvaluator.Infrastructure.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 
 namespace DealEvaluator.Web;
@@ -26,8 +28,16 @@ public class Program
         builder.Services.AddIdentity<User, IdentityRole>()
             .AddEntityFrameworkStores<DealEvaluatorContext>()
             .AddApiEndpoints();
-        
-        builder.Services.AddAuthorization();
+
+        // Configure authorization policies
+        builder.Services.AddAuthorization(options =>
+        {
+            options.AddPolicy("PropertyOwner", policy =>
+                policy.Requirements.Add(new PropertyOwnerRequirement()));
+        });
+
+        // Register authorization handlers
+        builder.Services.AddScoped<IAuthorizationHandler, PropertyOwnershipHandler>();
         
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();

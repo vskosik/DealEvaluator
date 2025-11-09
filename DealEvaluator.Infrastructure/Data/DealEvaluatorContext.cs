@@ -13,13 +13,11 @@ public class DealEvaluatorContext : IdentityDbContext<User>
     public DbSet<Comparable> Comparables { get; set; }
     public DbSet<Evaluation> Evaluations { get; set; }
     public DbSet<MarketData> MarketData { get; set; }
-    public DbSet<ApiLog> ApiLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
 
-        builder.ApplyConfiguration(new ApiLogConfiguration());
         builder.ApplyConfiguration(new UserConfiguration());
         builder.ApplyConfiguration(new PropertyConfiguration());
         builder.ApplyConfiguration(new MarketDataConfiguration());

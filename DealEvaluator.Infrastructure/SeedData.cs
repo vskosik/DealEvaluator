@@ -224,48 +224,6 @@ public class SeedData
             context.Comparables.AddRange(comparableList);
         }
 
-        if (!context.ApiLogs.Any())
-        {
-            var apiLogList = new List<ApiLog>
-            {
-                new ApiLog
-                {
-                    PropertyId = 1003, // Ensure this property exists
-                    UserId = "5b377fd9-e9ed-4608-9bd2-b6ec6058f077", // Ensure this user exists
-                    Endpoint = "/api/properties/1",
-                    RequestData = "{ \"request\": \"Get property details\" }",
-                    ResponseData = "{ \"response\": \"Success\", \"data\": { \"price\": 320000 } }",
-                    Success = true,
-                    ErrorMessage = null,
-                    CreatedAt = DateTime.UtcNow
-                },
-                new ApiLog
-                {
-                    PropertyId = 1003,
-                    UserId = "5b377fd9-e9ed-4608-9bd2-b6ec6058f077",
-                    Endpoint = "/api/properties/2",
-                    RequestData = "{ \"request\": \"Get property details\" }",
-                    ResponseData = "{ \"response\": \"Success\", \"data\": { \"price\": 310000 } }",
-                    Success = true,
-                    ErrorMessage = null,
-                    CreatedAt = DateTime.UtcNow
-                },
-                new ApiLog
-                {
-                    PropertyId = null, // Simulating a request not tied to a property
-                    UserId = "de07f6af-d0bb-45e5-962b-93a08d62d928",
-                    Endpoint = "/api/auth/login",
-                    RequestData = "{ \"username\": \"testuser\", \"password\": \"****\" }",
-                    ResponseData = "{ \"response\": \"Failure\" }",
-                    Success = false,
-                    ErrorMessage = "Invalid credentials",
-                    CreatedAt = DateTime.UtcNow
-                }
-            };
-            
-            context.ApiLogs.AddRange(apiLogList);
-        }
-
         await context.SaveChangesAsync();
     }
 }
