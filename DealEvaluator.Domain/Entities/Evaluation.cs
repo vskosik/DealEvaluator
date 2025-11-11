@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace DealEvaluator.Domain.Entities;
 
 public class Evaluation
@@ -5,7 +7,6 @@ public class Evaluation
     public int Id { get; set; }
     public int PropertyId { get; set; }
     public int? Arv { get; set; }
-    public int? RepairCost { get; set; }
     public int? RentalIncome { get; set; }
     public decimal? CapRate { get; set; }
     public decimal? CashOnCash { get; set; }
@@ -19,4 +20,9 @@ public class Evaluation
 
     // Navigation properties
     public ICollection<Comparable> Comparables { get; set; } = new List<Comparable>();
+    public RehabEstimate? RehabEstimate { get; set; }
+
+    // Computed property - repair cost from rehab estimate
+    [NotMapped]
+    public int? RepairCost => RehabEstimate != null ? (int?)Math.Round(RehabEstimate.TotalCost) : null;
 }

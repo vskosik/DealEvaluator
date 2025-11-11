@@ -133,7 +133,7 @@ public class SeedData
                 {
                     PropertyId = 1003, // Ensure this property exists in the DB
                     Arv = 300000,
-                    RepairCost = 50000,
+                    // RepairCost = 50000,
                     RentalIncome = 1800,
                     CapRate = 8,
                     CashOnCash = 12,
@@ -143,7 +143,7 @@ public class SeedData
                 {
                     PropertyId = 1003,
                     Arv = 310000,
-                    RepairCost = 45000,
+                    // RepairCost = 45000,
                     RentalIncome = 1850,
                     CapRate = 8,
                     CashOnCash = 13,
@@ -153,7 +153,7 @@ public class SeedData
                 {
                     PropertyId = 1005, // Different property
                     Arv = 400000,
-                    RepairCost = 60000,
+                    // RepairCost = 60000,
                     RentalIncome = 2500,
                     CapRate = 9,
                     CashOnCash = 14,

@@ -196,40 +196,6 @@ public class PropertyController : BaseAuthorizedController
         }
     }
 
-    // POST: Property/CreateEvaluation - Create a new evaluation with 70% rule calculations
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CreateEvaluation(CreateEvaluationDto dto)
-    {
-        try
-        {
-            var (error, _) = await GetAuthorizedPropertyAsync(dto.PropertyId);
-            if (error != null) return error;
-
-            // Create evaluation
-            var evaluation = await PropertyService.CreateEvaluationAsync(dto);
-
-            TempData["NotificationType"] = "success";
-            TempData["Notification"] = $"Evaluation created! Max Offer: ${evaluation.MaxOffer:N0}, Potential Profit: ${evaluation.Profit:N0}";
-
-            return RedirectToAction("Details", new { id = dto.PropertyId });
-        }
-        catch (InvalidOperationException ex)
-        {
-            _logger.LogWarning(ex, "Validation error creating evaluation for property {PropertyId}", dto.PropertyId);
-            TempData["NotificationType"] = "error";
-            TempData["Notification"] = ex.Message;
-            return RedirectToAction("Details", new { id = dto.PropertyId });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating evaluation for property ID {PropertyId}", dto.PropertyId);
-            TempData["NotificationType"] = "error";
-            TempData["Notification"] = "Error creating evaluation. Please try again.";
-            return RedirectToAction("Details", new { id = dto.PropertyId });
-        }
-    }
-
     // POST: Property/Delete/5 - Delete a property
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -294,17 +260,11 @@ public class PropertyController : BaseAuthorizedController
                 return Json(new { success = false, error = "Invalid data received" });
             }
 
-            _logger.LogInformation("AddComparable called with PropertyId: {PropertyId}, Address: {Address}",
-                dto.PropertyId, dto.Address);
-
             var (error, _) = await GetAuthorizedPropertyAsync(dto.PropertyId);
             if (error != null)
                 return Json(new { success = false, error = "Unauthorized or property not found" });
 
             var comparable = await PropertyService.CreateComparableFromMarketDataAsync(dto);
-
-            _logger.LogInformation("Successfully added comparable {ComparableId} to property {PropertyId}",
-                comparable.Id, dto.PropertyId);
 
             return Json(new { success = true, comparable });
         }
@@ -313,6 +273,33 @@ public class PropertyController : BaseAuthorizedController
             _logger.LogError(ex, "Error adding comparable for property ID {PropertyId}. DTO: {@Dto}",
                 dto?.PropertyId, dto);
             return Json(new { success = false, error = $"Failed to add comparable: {ex.Message}" });
+        }
+    }
+    
+    // POST: Property/CreateEvaluation - Create a new evaluation with 70% rule calculations
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateEvaluation(CreateEvaluationDto dto)
+    {
+        try
+        {
+            var (error, _) = await GetAuthorizedPropertyAsync(dto.PropertyId);
+            if (error != null) return error;
+
+            // Create evaluation
+            var evaluation = await PropertyService.CreateEvaluationAsync(dto);
+
+            TempData["NotificationType"] = "success";
+            TempData["Notification"] = $"Evaluation created! Max Offer: ${evaluation.MaxOffer:N0}, Potential Profit: ${evaluation.Profit:N0}";
+
+            return RedirectToAction("Details", new { id = dto.PropertyId });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating evaluation for property ID {PropertyId}", dto.PropertyId);
+            TempData["NotificationType"] = "error";
+            TempData["Notification"] = "Error creating evaluation. Please try again.";
+            return RedirectToAction("Details", new { id = dto.PropertyId });
         }
     }
 
@@ -324,7 +311,7 @@ public class PropertyController : BaseAuthorizedController
         {
             if (string.IsNullOrWhiteSpace(zipCode))
             {
-                return BadRequest(new { error = "Zip code is required" });
+                return BadRequest("Zip code is required");
             }
 
             var marketData = await _marketDataService.GetMarketDataForZipCodeAsync(zipCode);

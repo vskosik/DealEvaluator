@@ -122,7 +122,8 @@ public class PropertyService : IPropertyService
             {
                 PropertyId = property.Id,
                 Arv = arv,
-                RepairCost = repairCost,
+                // TODO: Figure out how to implement new RepairCost estimate
+                // RepairCost = repairCost,
                 MaxOffer = maxOffer,
                 Profit = profit,
                 Roi = roi,
@@ -254,7 +255,8 @@ public class PropertyService : IPropertyService
         {
             PropertyId = dto.PropertyId,
             Arv = arv,
-            RepairCost = repairCost,
+            // TODO: Figure out how to implement new RepairCost estimate
+            // RepairCost = repairCost,
             MaxOffer = maxOffer,
             Profit = profit,
             Roi = roi,
