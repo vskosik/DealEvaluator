@@ -11,7 +11,6 @@ public class EvaluationConfiguration : IEntityTypeConfiguration<Evaluation>
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Arv).IsRequired(false);
-        builder.Property(x => x.RepairCost).IsRequired(false);
         builder.Property(x => x.RentalIncome).IsRequired(false);
         builder.Property(x => x.CapRate).IsRequired(false);
         builder.Property(x => x.CashOnCash).IsRequired(false);
@@ -26,6 +25,9 @@ public class EvaluationConfiguration : IEntityTypeConfiguration<Evaluation>
         builder.Property(x => x.CreatedAt)
             .IsRequired()
             .HasDefaultValueSql("GETUTCDATE()");
+
+        // RepairCost is now a computed property from RehabEstimate
+        builder.Ignore(x => x.RepairCost);
 
         // Many-to-many relationship with Comparables
         builder.HasMany(x => x.Comparables)

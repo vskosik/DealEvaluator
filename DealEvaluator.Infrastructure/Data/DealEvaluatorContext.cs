@@ -13,6 +13,9 @@ public class DealEvaluatorContext : IdentityDbContext<User>
     public DbSet<Comparable> Comparables { get; set; }
     public DbSet<Evaluation> Evaluations { get; set; }
     public DbSet<MarketData> MarketData { get; set; }
+    public DbSet<RehabEstimate> RehabEstimates { get; set; }
+    public DbSet<RehabLineItem> RehabLineItems { get; set; }
+    public DbSet<RehabCostTemplate> RehabCostTemplates { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -23,5 +26,8 @@ public class DealEvaluatorContext : IdentityDbContext<User>
         builder.ApplyConfiguration(new MarketDataConfiguration());
         builder.ApplyConfiguration(new ComparableConfiguration());
         builder.ApplyConfiguration(new EvaluationConfiguration());
+        builder.ApplyConfiguration(new RehabEstimateConfiguration());
+        builder.ApplyConfiguration(new RehabLineItemConfiguration());
+        builder.ApplyConfiguration(new RehabCostTemplateConfiguration());
     }
 }
