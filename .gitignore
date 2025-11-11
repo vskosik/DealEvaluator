@@ -32,3 +32,25 @@ temp/
 
 # Ignore test results
 TestResults/
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+*.mdf
+*.ldf
+
+# Visual Studio
+.vs/
+
+# JetBrains Rider (additional)
+*.sln.DotSettings
+
+# Node modules (if using frontend tooling)
+node_modules/
+wwwroot/lib/
