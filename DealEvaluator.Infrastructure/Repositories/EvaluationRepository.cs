@@ -20,6 +20,8 @@ public class EvaluationRepository : DbRepository<Evaluation>, IEvaluationReposit
     {
         return await _evaluations
             .Include(e => e.Comparables)
+            .Include(e => e.RehabEstimate)
+                .ThenInclude(r => r.LineItems)
             .Where(e => e.PropertyId == propertyId)
             .OrderByDescending(e => e.CreatedAt)
             .ToListAsync();
@@ -29,6 +31,8 @@ public class EvaluationRepository : DbRepository<Evaluation>, IEvaluationReposit
     {
         return await _evaluations
             .Include(e => e.Comparables)
+            .Include(e => e.RehabEstimate)
+                .ThenInclude(r => r.LineItems)
             .Where(e => e.PropertyId == propertyId)
             .OrderByDescending(e => e.CreatedAt)
             .FirstOrDefaultAsync();
