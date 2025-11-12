@@ -3,17 +3,16 @@ using DealEvaluator.Application.DTOs.Rehab;
 using DealEvaluator.Application.Interfaces;
 using DealEvaluator.Domain.Entities;
 using DealEvaluator.Domain.Enums;
-using Microsoft.EntityFrameworkCore;
 
 namespace DealEvaluator.Application.Services;
 
 public class RehabCostTemplateService : IRehabCostTemplateService
 {
-    private readonly IRepository<RehabCostTemplate> _templateRepository;
+    private readonly IRehabCostTemplateRepository _templateRepository;
     private readonly IMapper _mapper;
 
     public RehabCostTemplateService(
-        IRepository<RehabCostTemplate> templateRepository,
+        IRehabCostTemplateRepository templateRepository,
         IMapper mapper)
     {
         _templateRepository = templateRepository;
@@ -22,23 +21,34 @@ public class RehabCostTemplateService : IRehabCostTemplateService
 
     public async Task<List<RehabCostTemplateDto>> GetUserTemplatesAsync(string userId)
     {
-        // Note: This requires a custom query beyond the basic IRepository interface
-        // For now, returning empty list - will need to add custom repository method
-        // TODO: Add GetByUserIdAsync to IRepository or create specific interface
-        return new List<RehabCostTemplateDto>();
+        var templates = await _templateRepository.GetTemplatesByUserIdAsync(userId);
+        return _mapper.Map<List<RehabCostTemplateDto>>(templates);
     }
 
     public async Task<RehabCostTemplateDto?> GetTemplateAsync(string userId, RehabLineItemType lineItemType, RehabCondition condition)
     {
-        // Note: This requires a custom query beyond the basic IRepository interface
-        // TODO: Add custom query method to repository
-        return null;
+        var template = await _templateRepository.GetTemplateByUserAndTypeConditionAsync(userId, lineItemType, condition);
+        return _mapper.Map<RehabCostTemplateDto?>(template);
     }
 
     public async Task<RehabCostTemplateDto> UpsertTemplateAsync(string userId, RehabLineItemType lineItemType, RehabCondition condition, decimal defaultCost)
     {
-        // Note: This requires a custom query to find existing template
-        // For now, creating a basic implementation
+        // Check if template already exists
+        var existingTemplate = await _templateRepository.GetTemplateByUserAndTypeConditionAsync(userId, lineItemType, condition);
+
+        if (existingTemplate != null)
+        {
+            // Update existing template
+            existingTemplate.DefaultCost = defaultCost;
+            existingTemplate.UpdatedAt = DateTime.UtcNow;
+
+            _templateRepository.Update(existingTemplate);
+            await _templateRepository.SaveChangesAsync();
+
+            return _mapper.Map<RehabCostTemplateDto>(existingTemplate);
+        }
+
+        // Create new template
         var template = new RehabCostTemplate
         {
             UserId = userId,
