@@ -1,4 +1,5 @@
 using DealEvaluator.Application.DTOs.Comparable;
+using DealEvaluator.Application.DTOs.Rehab;
 
 namespace DealEvaluator.Application.DTOs.Evaluation;
 
@@ -20,4 +21,5 @@ public class EvaluationDto
     public DateTime CreatedAt { get; set; }
 
     public List<ComparableDto> Comparables { get; set; } = new();
+    public RehabEstimateDto? RehabEstimate { get; set; }
 }

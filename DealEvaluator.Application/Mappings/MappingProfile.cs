@@ -3,6 +3,7 @@ using DealEvaluator.Application.DTOs.Comparable;
 using DealEvaluator.Application.DTOs.Evaluation;
 using DealEvaluator.Application.DTOs.MarketData;
 using DealEvaluator.Application.DTOs.Property;
+using DealEvaluator.Application.DTOs.Rehab;
 using DealEvaluator.Application.DTOs.User;
 using DealEvaluator.Domain.Entities;
 
@@ -33,5 +34,11 @@ public class MappingProfile : Profile
         // User mappings
         CreateMap<User, UserDto>();
         CreateMap<UpdateUserDto, User>();
+
+        // Rehab mappings
+        CreateMap<RehabEstimate, RehabEstimateDto>();
+        CreateMap<RehabLineItem, RehabLineItemDto>();
+        CreateMap<CreateRehabLineItemDto, RehabLineItem>();
+        CreateMap<RehabCostTemplate, RehabCostTemplateDto>();
     }
 }

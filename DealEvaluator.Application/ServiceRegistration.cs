@@ -15,6 +15,7 @@ public static class ServiceRegistration
         services.AddScoped<IPropertyService, PropertyService>();
         services.AddScoped<IMarketDataService, MarketDataService>();
         services.AddScoped<ICompService, CompService>();
+        services.AddScoped<IRehabCostTemplateService, RehabCostTemplateService>();
 
         // Register ZillowApiService with HttpClient
         services.AddHttpClient<ZillowApiService>();

@@ -243,7 +243,23 @@ public class PropertyService : IPropertyService
             throw new InvalidOperationException("Comparables must have valid prices to calculate ARV");
 
         int arv = (int)comparablePrices.Average();
-        int repairCost = dto.RepairCost ?? 0;
+
+        // Create rehab estimate and line items
+        var rehabEstimate = new RehabEstimate
+        {
+            CreatedAt = DateTime.UtcNow,
+            LineItems = dto.RehabLineItems.Select(li => new RehabLineItem
+            {
+                LineItemType = li.LineItemType,
+                Condition = li.Condition,
+                Quantity = li.Quantity,
+                UnitCost = li.UnitCost,
+                Notes = li.Notes
+            }).ToList()
+        };
+
+        // Calculate repair cost from rehab estimate (TotalCost is computed property)
+        int repairCost = (int)Math.Round(rehabEstimate.TotalCost);
 
         // Calculate 70% Rule metrics
         int maxOffer = (int)(arv * 0.7) - repairCost;
@@ -255,13 +271,12 @@ public class PropertyService : IPropertyService
         {
             PropertyId = dto.PropertyId,
             Arv = arv,
-            // TODO: Figure out how to implement new RepairCost estimate
-            // RepairCost = repairCost,
             MaxOffer = maxOffer,
             Profit = profit,
             Roi = roi,
             CreatedAt = DateTime.UtcNow,
-            Comparables = comparables
+            Comparables = comparables,
+            RehabEstimate = rehabEstimate
         };
 
         // Save evaluation
