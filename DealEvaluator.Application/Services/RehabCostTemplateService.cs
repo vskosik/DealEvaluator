@@ -115,11 +115,6 @@ public class RehabCostTemplateService : IRehabCostTemplateService
             (RehabLineItemType.Bathroom, RehabCondition.Moderate, 8000m),
             (RehabLineItemType.Bathroom, RehabCondition.Heavy, 15000m),
 
-            // Bedroom costs
-            (RehabLineItemType.MasterBedroom, RehabCondition.Cosmetic, 2000m),
-            (RehabLineItemType.MasterBedroom, RehabCondition.Moderate, 5000m),
-            (RehabLineItemType.MasterBedroom, RehabCondition.Heavy, 10000m),
-
             (RehabLineItemType.Bedroom, RehabCondition.Cosmetic, 1500m),
             (RehabLineItemType.Bedroom, RehabCondition.Moderate, 3500m),
             (RehabLineItemType.Bedroom, RehabCondition.Heavy, 7000m),
@@ -172,10 +167,6 @@ public class RehabCostTemplateService : IRehabCostTemplateService
             (RehabLineItemType.Doors, RehabCondition.Cosmetic, 1000m),
             (RehabLineItemType.Doors, RehabCondition.Moderate, 3000m),
             (RehabLineItemType.Doors, RehabCondition.Heavy, 7000m),
-
-            (RehabLineItemType.Landscaping, RehabCondition.Cosmetic, 1000m),
-            (RehabLineItemType.Landscaping, RehabCondition.Moderate, 3000m),
-            (RehabLineItemType.Landscaping, RehabCondition.Heavy, 8000m),
 
             // Other
             (RehabLineItemType.Other, RehabCondition.Cosmetic, 1000m),

@@ -4,7 +4,6 @@ public enum RehabLineItemType
 {
     Kitchen,
     Bathroom,
-    MasterBedroom,
     Bedroom,
     LivingRoom,
     DiningRoom,
@@ -17,6 +16,5 @@ public enum RehabLineItemType
     Flooring,
     Windows,
     Doors,
-    Landscaping,
     Other
 }
