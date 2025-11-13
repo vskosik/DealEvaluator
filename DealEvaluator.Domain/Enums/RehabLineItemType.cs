@@ -16,5 +16,6 @@ public enum RehabLineItemType
     Flooring,
     Windows,
     Doors,
-    Other
+    Other,
+    General
 }

@@ -172,6 +172,11 @@ public class RehabCostTemplateService : IRehabCostTemplateService
             (RehabLineItemType.Other, RehabCondition.Cosmetic, 1000m),
             (RehabLineItemType.Other, RehabCondition.Moderate, 3000m),
             (RehabLineItemType.Other, RehabCondition.Heavy, 8000m),
+
+            // General (per square foot)
+            (RehabLineItemType.General, RehabCondition.Cosmetic, 10m),
+            (RehabLineItemType.General, RehabCondition.Moderate, 20m),
+            (RehabLineItemType.General, RehabCondition.Heavy, 35m),
         };
     }
 }

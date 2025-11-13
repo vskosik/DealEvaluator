@@ -2,7 +2,7 @@
 (function() {
     'use strict';
 
-    const lineItemTypes = ['Kitchen', 'Bathroom', 'Master Bedroom', 'Bedroom', 'Living Room', 'Dining Room', 'Basement', 'Exterior', 'Roof', 'HVAC', 'Plumbing', 'Electrical', 'Flooring', 'Windows', 'Doors', 'Landscaping', 'Other'];
+    const lineItemTypes = ['Kitchen', 'Bathroom', 'Bedroom', 'Living Room', 'Dining Room', 'Basement', 'Exterior', 'Roof', 'HVAC', 'Plumbing', 'Electrical', 'Flooring', 'Windows', 'Doors', 'Other', 'General'];
     const conditions = ['Cosmetic', 'Moderate', 'Heavy'];
     let lineItems = [];
     let editingIndex = null;
@@ -181,6 +181,95 @@
         updateTotal();
     }
 
+    function mapPropertyConditionToRehabCondition(propertyCondition) {
+        // PropertyCondition enum values:
+        // 0: LikeNew, 1: Excellent, 2: Good, 3: MinorRepairs,
+        // 4: MajorRepairs, 5: NeedsRenovation, 6: TearDown
+
+        // RehabCondition: 0: Cosmetic, 1: Moderate, 2: Heavy
+
+        if (propertyCondition <= 2) return 0; // Cosmetic (LikeNew, Excellent, Good)
+        if (propertyCondition === 3) return 1; // Moderate (MinorRepairs)
+        return 2; // Heavy (MajorRepairs, NeedsRenovation, TearDown)
+    }
+
+    async function fetchTemplateCost(lineItemType, condition) {
+        try {
+            const response = await fetch(`/RehabTemplate/GetTemplate?lineItemType=${lineItemType}&condition=${condition}`);
+            const data = await response.json();
+
+            if (data.success && data.template) {
+                return data.template.defaultCost;
+            }
+            return 0;
+        } catch (error) {
+            console.error('Error fetching template cost:', error);
+            return 0;
+        }
+    }
+
+    async function autoPrefillFromProperty() {
+        // Get property details from window global
+        if (!window.PropertyPageConfig || !window.PropertyPageConfig.mainProperty) {
+            console.log('Property config not available for auto-prefill');
+            return;
+        }
+
+        const property = window.PropertyPageConfig.mainProperty;
+
+        // Check if we have required property data
+        if (property.condition === null) {
+            console.log('Property condition not available for auto-prefill');
+            return;
+        }
+
+        // Map property condition to rehab condition
+        const rehabCondition = mapPropertyConditionToRehabCondition(property.condition);
+
+        // Clear existing line items
+        lineItems = [];
+
+        // Add Bedroom line items (if available)
+        if (property.bedrooms && property.bedrooms > 0) {
+            const bedroomCost = await fetchTemplateCost(2, rehabCondition); // 2 = Bedroom
+            lineItems.push({
+                lineItemType: 2, // Bedroom
+                condition: rehabCondition,
+                quantity: property.bedrooms,
+                unitCost: bedroomCost,
+                notes: ''
+            });
+        }
+
+        // Add Bathroom line items (if available)
+        if (property.bathrooms && property.bathrooms > 0) {
+            const bathroomCost = await fetchTemplateCost(1, rehabCondition); // 1 = Bathroom
+            lineItems.push({
+                lineItemType: 1, // Bathroom
+                condition: rehabCondition,
+                quantity: Math.ceil(property.bathrooms), // Round up for half baths
+                unitCost: bathroomCost,
+                notes: ''
+            });
+        }
+
+        // Add General line item (sqft-based, if available)
+        if (property.sqft && property.sqft > 0) {
+            const generalCostPerSqft = await fetchTemplateCost(15, rehabCondition); // 15 = General
+            lineItems.push({
+                lineItemType: 15, // General
+                condition: rehabCondition,
+                quantity: property.sqft,
+                unitCost: generalCostPerSqft,
+                notes: 'General rehab estimate based on property square footage'
+            });
+        }
+
+        // Render and update
+        renderLineItems();
+        updateTotal();
+    }
+
     async function fetchTemplateAndUpdateCost() {
         const lineItemType = document.getElementById('newLineItemType').value;
         const condition = document.getElementById('newCondition').value;
@@ -309,12 +398,25 @@
         });
     }
 
+    function initializeModalEvents() {
+        const evaluationModal = document.getElementById('createEvaluationModal');
+        if (evaluationModal) {
+            evaluationModal.addEventListener('shown.bs.modal', function() {
+                // Only auto-prefill if no items exist yet
+                if (lineItems.length === 0) {
+                    autoPrefillFromProperty();
+                }
+            });
+        }
+    }
+
     // Initialize when DOM is ready
     function initialize() {
         initializeTemplateSelection();
         initializeAddLineItemButton();
         initializeFormSubmit();
         initializeComparableSelection();
+        initializeModalEvents();
         renderLineItems();
         updateTotal();
     }

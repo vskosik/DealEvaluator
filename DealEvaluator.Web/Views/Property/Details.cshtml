@@ -405,7 +405,8 @@
                 bedrooms: @(Model.Property.Bedrooms?.ToString() ?? "null"),
                 bathrooms: @(Model.Property.Bathrooms?.ToString() ?? "null"),
                 latitude: @(Model.Property.Latitude?.ToString() ?? "null"),
-                longitude: @(Model.Property.Longitude?.ToString() ?? "null")
+                longitude: @(Model.Property.Longitude?.ToString() ?? "null"),
+                condition: @((int)Model.Property.PropertyConditions)
             }
         };
     </script>
