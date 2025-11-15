@@ -1,6 +1,6 @@
 @model DealEvaluator.Web.Models.PropertyDetailsViewModel
 
-<div class="modal fade" id="createEvaluationModal" tabindex="-1" aria-labelledby="createEvaluationModalLabel" aria-hidden="true">
+<div class="modal fade" id="createEvaluationModal" tabindex="-1" aria-labelledby="createEvaluationModalLabel" aria-hidden="true" x-data="evaluationModal()" x-init="init()">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
@@ -13,7 +13,7 @@
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form asp-controller="Property" asp-action="CreateEvaluation" method="post" id="evaluationForm">
+            <form asp-controller="Property" asp-action="CreateEvaluation" method="post" id="evaluationForm" x-on:submit="submitForm($event)">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="PropertyId" value="@Model.Property.Id" />
 
@@ -40,7 +40,7 @@
                                     Rehab Line Items
                                 </label>
                                 <div class="badge bg-success fs-6">
-                                    Total: $<span id="totalCost">0</span>
+                                    Total: $<span x-text="formatCurrency(total)">0</span>
                                 </div>
                             </div>
 
@@ -52,50 +52,36 @@
                                     <div class="row g-2">
                                         <div class="col-md-4">
                                             <label class="form-label small">Type</label>
-                                            <select class="form-select form-select-sm" id="newLineItemType">
-                                                <option value="0">Kitchen</option>
-                                                <option value="1">Bathroom</option>
-                                                <option value="2">Master Bedroom</option>
-                                                <option value="3">Bedroom</option>
-                                                <option value="4">Living Room</option>
-                                                <option value="5">Dining Room</option>
-                                                <option value="6">Basement</option>
-                                                <option value="7">Exterior</option>
-                                                <option value="8">Roof</option>
-                                                <option value="9">HVAC</option>
-                                                <option value="10">Plumbing</option>
-                                                <option value="11">Electrical</option>
-                                                <option value="12">Flooring</option>
-                                                <option value="13">Windows</option>
-                                                <option value="14">Doors</option>
-                                                <option value="15">Landscaping</option>
-                                                <option value="16">Other</option>
+                                            <select class="form-select form-select-sm" x-model.number="newItem.lineItemType" x-on:change="fetchTemplateAndUpdateCost()">
+                                                <template x-for="(type, index) in lineItemTypes" :key="index">
+                                                    <option :value="index" x-text="type"></option>
+                                                </template>
                                             </select>
                                         </div>
                                         <div class="col-md-3">
                                             <label class="form-label small">Condition</label>
-                                            <select class="form-select form-select-sm" id="newCondition">
-                                                <option value="0">Cosmetic</option>
-                                                <option value="1">Moderate</option>
-                                                <option value="2">Heavy</option>
+                                            <select class="form-select form-select-sm" x-model.number="newItem.condition" x-on:change="fetchTemplateAndUpdateCost()">
+                                                <template x-for="(cond, index) in conditions" :key="index">
+                                                    <option :value="index" x-text="cond"></option>
+                                                </template>
                                             </select>
                                         </div>
                                         <div class="col-md-2">
                                             <label class="form-label small">Qty</label>
-                                            <input type="number" class="form-control form-control-sm" id="newQuantity" value="1" min="1">
+                                            <input type="number" class="form-control form-control-sm" x-model.number="newItem.quantity" min="1">
                                         </div>
                                         <div class="col-md-3">
                                             <label class="form-label small">Unit Cost ($)</label>
-                                            <input type="number" class="form-control form-control-sm" id="newUnitCost" value="0" min="0" step="100">
+                                            <input type="number" class="form-control form-control-sm" x-model.number="newItem.unitCost" min="0" step="100">
                                         </div>
                                     </div>
                                     <div class="row g-2 mt-2">
                                         <div class="col-md-10">
                                             <label class="form-label small">Notes (optional)</label>
-                                            <input type="text" class="form-control form-control-sm" id="newNotes" placeholder="Additional notes...">
+                                            <input type="text" class="form-control form-control-sm" x-model="newItem.notes" placeholder="Additional notes...">
                                         </div>
                                         <div class="col-md-2 d-flex align-items-end">
-                                            <button type="button" class="btn btn-success btn-sm w-100" id="addLineItemBtn">
+                                            <button type="button" class="btn btn-success btn-sm w-100" x-on:click="addLineItem()">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
                                                     <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
                                                 </svg>
@@ -106,13 +92,91 @@
                                 </div>
                             </div>
 
-                            <div id="lineItemsList" class="list-group" style="max-height: 400px; overflow-y: auto;">
-                                <div class="text-center text-muted py-4" id="emptyState">
+                            <div class="list-group" style="max-height: 400px; overflow-y: auto;">
+                                <!-- Empty State -->
+                                <div class="text-center text-muted py-4" x-show="lineItems.length === 0">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-inbox mb-2" viewBox="0 0 16 16">
                                         <path d="M4.98 4a.5.5 0 0 0-.39.188L1.54 8H6a.5.5 0 0 1 .5.5 1.5 1.5 0 1 0 3 0A.5.5 0 0 1 10 8h4.46l-3.05-3.812A.5.5 0 0 0 11.02 4zm9.954 5H10.45a2.5 2.5 0 0 1-4.9 0H1.066l.32 2.562a.5.5 0 0 0 .497.438h12.234a.5.5 0 0 0 .496-.438zM3.809 3.563A1.5 1.5 0 0 1 4.981 3h6.038a1.5 1.5 0 0 1 1.172.563l3.7 4.625a.5.5 0 0 1 .105.374l-.39 3.124A1.5 1.5 0 0 1 14.117 13H1.883a1.5 1.5 0 0 1-1.489-1.314l-.39-3.124a.5.5 0 0 1 .106-.374z"/>
                                     </svg>
                                     <p>No line items added yet.<br><small class="text-muted">Add line items above to estimate repair costs</small></p>
                                 </div>
+
+                                <!-- Line Items List -->
+                                <template x-for="(item, index) in lineItems" :key="index">
+                                    <div class="list-group-item">
+                                        <!-- Edit Mode -->
+                                        <div x-show="editingIndex === index">
+                                            <div class="row g-2">
+                                                <div class="col-md-3">
+                                                    <select class="form-select form-select-sm" x-model.number="item.lineItemType">
+                                                        <template x-for="(type, i) in lineItemTypes" :key="i">
+                                                            <option :value="i" x-text="type"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <select class="form-select form-select-sm" x-model.number="item.condition">
+                                                        <template x-for="(cond, i) in conditions" :key="i">
+                                                            <option :value="i" x-text="cond"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <input type="number" class="form-control form-control-sm" x-model.number="item.quantity" min="1">
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <input type="number" class="form-control form-control-sm" x-model.number="item.unitCost" min="0" step="100">
+                                                </div>
+                                                <div class="col-md-2 d-flex gap-1 justify-content-end">
+                                                    <button type="button" class="btn btn-sm btn-success" x-on:click="saveItem(index)" title="Save">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                                            <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/>
+                                                        </svg>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-secondary" x-on:click="cancelEdit()" title="Cancel">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                                            <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                                <div class="col-12">
+                                                    <input type="text" class="form-control form-control-sm" x-model="item.notes" placeholder="Notes (optional)">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Display Mode -->
+                                        <div x-show="editingIndex !== index">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div class="flex-grow-1">
+                                                    <div class="d-flex align-items-center mb-1">
+                                                        <strong x-text="lineItemTypes[item.lineItemType]"></strong>
+                                                        <span class="badge bg-secondary ms-2" x-text="conditions[item.condition]"></span>
+                                                    </div>
+                                                    <small class="text-muted">
+                                                        Qty: <span x-text="item.quantity"></span> × $<span x-text="formatCurrency(item.unitCost)"></span> = $<span x-text="formatCurrency(item.quantity * item.unitCost)"></span>
+                                                    </small>
+                                                    <div x-show="item.notes">
+                                                        <small class="text-muted fst-italic" x-text="item.notes"></small>
+                                                    </div>
+                                                </div>
+                                                <div class="d-flex gap-1">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary" x-on:click="editItem(index)" title="Edit">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                                            <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"/>
+                                                        </svg>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" x-on:click="deleteItem(index)" title="Delete">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                                                            <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
                             </div>
                         </div>
 
