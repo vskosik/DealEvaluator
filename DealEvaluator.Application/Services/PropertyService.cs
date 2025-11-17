@@ -2,6 +2,7 @@ using AutoMapper;
 using DealEvaluator.Application.DTOs.Comparable;
 using DealEvaluator.Application.DTOs.Evaluation;
 using DealEvaluator.Application.DTOs.Property;
+using DealEvaluator.Application.DTOs.Rehab;
 using DealEvaluator.Application.Interfaces;
 using DealEvaluator.Domain.Entities;
 using System.Text.Json;
@@ -11,9 +12,20 @@ namespace DealEvaluator.Application.Services;
 
 public class PropertyService : IPropertyService
 {
+    // Cost constants for realistic profit calculation
+    // These can be made configurable in future features
+    private const decimal SellingAgentCommission = 0.06m;    // 6% of ARV
+    private const decimal SellingClosingCosts = 0.02m;       // 2% of ARV
+    private const decimal BuyingClosingCosts = 0.02m;        // 2% of purchase price
+    private const decimal AnnualPropertyTaxRate = 0.012m;    // 1.2% annually
+    private const decimal MonthlyInsurance = 150m;           // Monthly insurance cost
+    private const decimal MonthlyUtilities = 200m;           // Monthly utilities cost
+    private const int DefaultHoldingMonths = 4;              // Average rehab holding period
+
     private readonly IPropertyRepository _propertyRepository;
     private readonly IEvaluationRepository _evaluationRepository;
     private readonly ICompService _compService;
+    private readonly IRehabCostTemplateRepository _rehabTemplateRepository;
     private readonly IMapper _mapper;
     private readonly IHttpClientFactory _httpClientFactory;
 
@@ -21,12 +33,14 @@ public class PropertyService : IPropertyService
         IPropertyRepository propertyRepository,
         IEvaluationRepository evaluationRepository,
         ICompService compService,
+        IRehabCostTemplateRepository rehabTemplateRepository,
         IMapper mapper,
         IHttpClientFactory httpClientFactory)
     {
         _propertyRepository = propertyRepository;
         _evaluationRepository = evaluationRepository;
         _compService = compService;
+        _rehabTemplateRepository = rehabTemplateRepository;
         _mapper = mapper;
         _httpClientFactory = httpClientFactory;
     }
@@ -61,12 +75,11 @@ public class PropertyService : IPropertyService
         await _propertyRepository.AddAsync(property);
         await _propertyRepository.SaveChangesAsync();
 
-        if (!dto.RepairCost.HasValue) 
-            return _mapper.Map<PropertyDto>(property);
-        
+        // Try to create automatic evaluation
         try
         {
             var propertyAddress = $"{property.Address}, {property.City}, {property.State} {property.ZipCode}";
+
             // Try to find comparables automatically
             var zillowComps = await _compService.FindComparablesAsync(
                 property.PropertyType,
@@ -76,11 +89,10 @@ public class PropertyService : IPropertyService
                 property.ZipCode,
                 propertyAddress);
 
-            // Convert ZillowProperties to Comparable entities
-            var comparables = new List<Comparable>();
+            // Save comparables first to get their IDs
+            var comparableIds = new List<int>();
             foreach (var zillowComp in zillowComps)
             {
-                // Parse Zillow's combined address string: "{street}, {city}, {state} {zip}"
                 var addressParts = ParseZillowAddress(zillowComp.Address);
 
                 var comparable = new Comparable
@@ -100,39 +112,43 @@ public class PropertyService : IPropertyService
                     ComparableType = ComparableType.Arv
                 };
 
-                comparables.Add(comparable);
+                var savedComparable = await _propertyRepository.CreateComparableAsync(comparable);
+                comparableIds.Add(savedComparable.Id);
             }
 
-            // Calculate ARV from comparable prices
-            var comparablePrices = comparables
-                .Where(c => c.Price.HasValue && c.Price.Value > 0)
-                .Select(c => c.Price!.Value)
-                .ToList();
+            // Generate rehab line items - use user input if provided, otherwise auto-generate
+            List<CreateRehabLineItemDto> rehabLineItemDtos;
 
-            int arv = (int)comparablePrices.Average();
-            int repairCost = dto.RepairCost.Value;
+            if (dto.RepairCost.HasValue && dto.RepairCost.Value > 0)
+            {
+                // User provided their own repair cost - create a single "Other" line item
+                rehabLineItemDtos = new List<CreateRehabLineItemDto>
+                {
+                    new()
+                    {
+                        LineItemType = RehabLineItemType.Other,
+                        Condition = MapPropertyConditionToRehabCondition(property.PropertyConditions),
+                        Quantity = 1,
+                        UnitCost = dto.RepairCost.Value,
+                        Notes = "User-provided repair cost estimate"
+                    }
+                };
+            }
+            else
+            {
+                // Auto-generate based on property details
+                rehabLineItemDtos = await GenerateAutoRehabLineItemDtosAsync(property, userId);
+            }
 
-            // Calculate 70% Rule metrics
-            int maxOffer = (int)(arv * 0.7) - repairCost;
-            int profit = arv - repairCost - maxOffer;
-            decimal? roi = maxOffer > 0 ? (decimal)profit / maxOffer * 100 : null;
-
-            // Create initial evaluation with auto-found comparables
-            var evaluation = new Evaluation
+            // Create evaluation using the existing method
+            var createEvaluationDto = new CreateEvaluationDto
             {
                 PropertyId = property.Id,
-                Arv = arv,
-                // TODO: Figure out how to implement new RepairCost estimate
-                // RepairCost = repairCost,
-                MaxOffer = maxOffer,
-                Profit = profit,
-                Roi = roi,
-                CreatedAt = DateTime.UtcNow,
-                Comparables = comparables
+                ComparableIds = comparableIds,
+                RehabLineItems = rehabLineItemDtos
             };
 
-            await _evaluationRepository.AddAsync(evaluation);
-            await _evaluationRepository.SaveChangesAsync();
+            await CreateEvaluationAsync(createEvaluationDto);
         }
         catch (InvalidOperationException)
         {
@@ -261,10 +277,30 @@ public class PropertyService : IPropertyService
         // Calculate repair cost from rehab estimate (TotalCost is computed property)
         int repairCost = (int)Math.Round(rehabEstimate.TotalCost);
 
-        // Calculate 70% Rule metrics
-        int maxOffer = (int)(arv * 0.7) - repairCost;
-        int profit = arv - repairCost - maxOffer;
-        decimal? roi = maxOffer > 0 ? (decimal)profit / maxOffer * 100 : null;
+        // Calculate 70% Rule max offer (traditional formula)
+        int maxOffer = (int)(arv * 0.7m) - repairCost;
+
+        // Calculate realistic profit with all costs included
+        // Selling costs (paid when selling the property)
+        decimal sellingCosts = arv * (SellingAgentCommission + SellingClosingCosts);
+
+        // Buying costs (paid when purchasing)
+        decimal buyingCosts = maxOffer * BuyingClosingCosts;
+
+        // Holding costs (monthly expenses during rehab period)
+        decimal monthlyPropertyTax = (arv * AnnualPropertyTaxRate) / 12;
+        decimal monthlyHoldingCosts = monthlyPropertyTax + MonthlyInsurance + MonthlyUtilities;
+        decimal totalHoldingCosts = monthlyHoldingCosts * DefaultHoldingMonths;
+
+        // Total investment (all money you put in)
+        decimal totalInvestment = maxOffer + buyingCosts + repairCost + totalHoldingCosts;
+
+        // Net proceeds from sale (what you get after selling)
+        decimal netProceeds = arv - sellingCosts;
+
+        // Real profit and ROI
+        int profit = (int)Math.Round(netProceeds - totalInvestment);
+        decimal? roi = totalInvestment > 0 ? (netProceeds - totalInvestment) / totalInvestment * 100 : null;
 
         // Create evaluation entity
         var evaluation = new Evaluation
@@ -311,7 +347,7 @@ public class PropertyService : IPropertyService
                 return (null, null);
             
             var result = results[0];
-            if (double.TryParse(result.lat, out var lat) && double.TryParse(result.lon, out var lon))
+            if (double.TryParse(result.Lat, out var lat) && double.TryParse(result.Lon, out var lon))
             {
                 return (lat, lon);
             }
@@ -358,7 +394,113 @@ public class PropertyService : IPropertyService
     // DTO for Nominatim API response
     private class NominatimResult
     {
-        public string lat { get; set; } = string.Empty;
-        public string lon { get; set; } = string.Empty;
+        public string Lat { get; set; } = string.Empty;
+        public string Lon { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Maps PropertyConditions to RehabCondition for auto-generating rehab estimates
+    /// </summary>
+    private static RehabCondition MapPropertyConditionToRehabCondition(PropertyConditions propertyCondition)
+    {
+        return propertyCondition switch
+        {
+            PropertyConditions.Excellent => RehabCondition.Cosmetic,    // Light refresh
+            PropertyConditions.MinorRepairs => RehabCondition.Moderate, // Some work needed
+            PropertyConditions.Outdated => RehabCondition.Moderate,     // Needs updates
+            PropertyConditions.Bad => RehabCondition.Heavy,             // Major renovation
+            PropertyConditions.Horrible => RehabCondition.Heavy,        // Full gut
+            _ => RehabCondition.Moderate                                 // Default to moderate
+        };
+    }
+
+    /// <summary>
+    /// Auto-generates rehab line item DTOs based on property details
+    /// Uses the same logic as the frontend auto-prefill
+    /// </summary>
+    private async Task<List<CreateRehabLineItemDto>> GenerateAutoRehabLineItemDtosAsync(Property property, string userId)
+    {
+        var rehabCondition = MapPropertyConditionToRehabCondition(property.PropertyConditions);
+        var lineItemDtos = new List<CreateRehabLineItemDto>();
+
+        // Add Bedroom line items
+        if (property.Bedrooms.HasValue && property.Bedrooms.Value > 0)
+        {
+            var template = await _rehabTemplateRepository.GetTemplateByUserAndTypeConditionAsync(
+                userId, RehabLineItemType.Bedroom, rehabCondition);
+
+            var unitCost = template?.DefaultCost ?? GetDefaultCostFallback(RehabLineItemType.Bedroom, rehabCondition);
+
+            lineItemDtos.Add(new CreateRehabLineItemDto
+            {
+                LineItemType = RehabLineItemType.Bedroom,
+                Condition = rehabCondition,
+                Quantity = property.Bedrooms.Value,
+                UnitCost = unitCost,
+                Notes = "Auto-generated based on property details"
+            });
+        }
+
+        // Add Bathroom line items
+        if (property.Bathrooms.HasValue && property.Bathrooms.Value > 0)
+        {
+            var template = await _rehabTemplateRepository.GetTemplateByUserAndTypeConditionAsync(
+                userId, RehabLineItemType.Bathroom, rehabCondition);
+
+            var unitCost = template?.DefaultCost ?? GetDefaultCostFallback(RehabLineItemType.Bathroom, rehabCondition);
+
+            lineItemDtos.Add(new CreateRehabLineItemDto
+            {
+                LineItemType = RehabLineItemType.Bathroom,
+                Condition = rehabCondition,
+                Quantity = property.Bathrooms.Value,
+                UnitCost = unitCost,
+                Notes = "Auto-generated based on property details"
+            });
+        }
+
+        // Add General line item (sqft-based)
+        if (property.Sqft.HasValue && property.Sqft.Value > 0)
+        {
+            var template = await _rehabTemplateRepository.GetTemplateByUserAndTypeConditionAsync(
+                userId, RehabLineItemType.General, rehabCondition);
+
+            var unitCost = template?.DefaultCost ?? GetDefaultCostFallback(RehabLineItemType.General, rehabCondition);
+
+            lineItemDtos.Add(new CreateRehabLineItemDto
+            {
+                LineItemType = RehabLineItemType.General,
+                Condition = rehabCondition,
+                Quantity = property.Sqft.Value,
+                UnitCost = unitCost,
+                Notes = "Auto-generated: General rehab estimate based on property square footage"
+            });
+        }
+
+        return lineItemDtos;
+    }
+
+    /// <summary>
+    /// Provides fallback default costs when no user template exists
+    /// </summary>
+    private static decimal GetDefaultCostFallback(RehabLineItemType lineItemType, RehabCondition condition)
+    {
+        // Default costs per unit based on typical rehab scenarios
+        return (lineItemType, condition) switch
+        {
+            (RehabLineItemType.Bedroom, RehabCondition.Cosmetic) => 500,
+            (RehabLineItemType.Bedroom, RehabCondition.Moderate) => 1500,
+            (RehabLineItemType.Bedroom, RehabCondition.Heavy) => 3000,
+
+            (RehabLineItemType.Bathroom, RehabCondition.Cosmetic) => 1000,
+            (RehabLineItemType.Bathroom, RehabCondition.Moderate) => 3500,
+            (RehabLineItemType.Bathroom, RehabCondition.Heavy) => 8000,
+
+            (RehabLineItemType.General, RehabCondition.Cosmetic) => 5,   // per sqft
+            (RehabLineItemType.General, RehabCondition.Moderate) => 15,  // per sqft
+            (RehabLineItemType.General, RehabCondition.Heavy) => 35,     // per sqft
+
+            _ => 0
+        };
     }
 }
