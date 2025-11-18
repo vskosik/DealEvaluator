@@ -130,16 +130,7 @@ function evaluationModal() {
             }
         },
 
-        // Map property condition to rehab condition
-        mapPropertyConditionToRehabCondition(propertyCondition) {
-            // PropertyCondition enum: 0-LikeNew, 1-Excellent, 2-Good, 3-MinorRepairs, 4-MajorRepairs, 5-NeedsRenovation, 6-TearDown
-            // RehabCondition: 0-Cosmetic, 1-Moderate, 2-Heavy
-            if (propertyCondition <= 2) return 0; // Cosmetic
-            if (propertyCondition === 3) return 1; // Moderate
-            return 2; // Heavy
-        },
-
-        // Auto-prefill from property details
+        // Auto-prefill from property details using backend API
         async autoPrefillFromProperty() {
             if (!window.PropertyPageConfig || !window.PropertyPageConfig.mainProperty) {
                 return;
@@ -151,44 +142,26 @@ function evaluationModal() {
                 return;
             }
 
-            const rehabCondition = this.mapPropertyConditionToRehabCondition(property.condition);
+            try {
+                // Call backend API to get auto-generated rehab estimate
+                const response = await fetch(`/Property/GetAutoRehabEstimate?propertyId=${property.id}`);
+                const data = await response.json();
 
-            this.lineItems = [];
-
-            // Add Bedroom line items
-            if (property.bedrooms && property.bedrooms > 0) {
-                const cost = await this.fetchTemplateCost(2, rehabCondition); // 2 = Bedroom
-                this.lineItems.push({
-                    lineItemType: 2,
-                    condition: rehabCondition,
-                    quantity: property.bedrooms,
-                    unitCost: cost,
-                    notes: ''
-                });
-            }
-
-            // Add Bathroom line items
-            if (property.bathrooms && property.bathrooms > 0) {
-                const cost = await this.fetchTemplateCost(1, rehabCondition); // 1 = Bathroom
-                this.lineItems.push({
-                    lineItemType: 1,
-                    condition: rehabCondition,
-                    quantity: Math.ceil(property.bathrooms),
-                    unitCost: cost,
-                    notes: ''
-                });
-            }
-
-            // Add General line item (sqft-based)
-            if (property.sqft && property.sqft > 0) {
-                const cost = await this.fetchTemplateCost(15, rehabCondition); // 15 = General
-                this.lineItems.push({
-                    lineItemType: 15,
-                    condition: rehabCondition,
-                    quantity: property.sqft,
-                    unitCost: cost,
-                    notes: 'General rehab estimate based on property square footage'
-                });
+                if (data.success && data.lineItems) {
+                    this.lineItems = data.lineItems.map(item => ({
+                        lineItemType: item.lineItemType,
+                        condition: item.condition,
+                        quantity: item.quantity,
+                        unitCost: item.unitCost,
+                        notes: item.notes || ''
+                    }));
+                } else {
+                    console.error('Failed to fetch auto rehab estimate:', data.error);
+                    this.lineItems = [];
+                }
+            } catch (error) {
+                console.error('Error fetching auto rehab estimate:', error);
+                this.lineItems = [];
             }
         },
 

@@ -13,13 +13,10 @@ PropertyPage.initializePropertyLocationMap = async function() {
         // Check if we have coordinates from the server
         if (!PropertyPage.mainProperty.latitude || !PropertyPage.mainProperty.longitude) {
             console.warn('Property coordinates not available');
-            // Hide the map card if coordinates are not available
+            // Hide just the map element, not the entire card
             const mapElement = document.getElementById('property-location-map');
             if (mapElement) {
-                const mapCard = mapElement.closest('.card');
-                if (mapCard) {
-                    mapCard.style.display = 'none';
-                }
+                mapElement.style.display = 'none';
             }
             return;
         }
@@ -61,13 +58,10 @@ PropertyPage.initializePropertyLocationMap = async function() {
         console.log('Property location map initialized successfully');
     } catch (error) {
         console.error('Error initializing property location map:', error);
-        // Hide the map card if there's an error
+        // Hide just the map element if there's an error
         const mapElement = document.getElementById('property-location-map');
         if (mapElement) {
-            const mapCard = mapElement.closest('.card');
-            if (mapCard) {
-                mapCard.style.display = 'none';
-            }
+            mapElement.style.display = 'none';
         }
     }
 };

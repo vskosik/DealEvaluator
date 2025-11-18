@@ -38,7 +38,10 @@
                             </div>
                             <div class="col-md-12 mb-3">
                                 <label for="Address" class="form-label">Street Address *</label>
-                                <input type="text" class="form-control form-control-lg" id="Address" name="Address" placeholder="123 Main Street" required>
+                                <div class="position-relative">
+                                    <input type="text" class="form-control form-control-lg" id="Address" name="Address" placeholder="Start typing an address..." required autocomplete="off">
+                                    <div id="address-suggestions" class="list-group position-absolute w-100" style="z-index: 1000; display: none; max-height: 300px; overflow-y: auto;"></div>
+                                </div>
                                 <div class="invalid-feedback">Please enter a street address.</div>
                             </div>
                             <div class="col-md-4 mb-3">
@@ -186,6 +189,7 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/address-autocomplete.js"></script>
     <script>
         // Auto-uppercase state input
         document.getElementById('State').addEventListener('input', function(e) {
@@ -199,6 +203,17 @@
                 e.stopPropagation();
             }
             this.classList.add('was-validated');
+        });
+
+        // Initialize address autocomplete
+        document.addEventListener('DOMContentLoaded', function() {
+            new AddressAutocomplete({
+                addressInputId: 'Address',
+                suggestionsId: 'address-suggestions',
+                cityInputId: 'City',
+                stateInputId: 'State',
+                zipInputId: 'ZipCode'
+            });
         });
     </script>
 }
