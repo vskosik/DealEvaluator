@@ -54,3 +54,6 @@ TestResults/
 # Node modules (if using frontend tooling)
 node_modules/
 wwwroot/lib/
+
+# Environment variables (contains secrets)
+.env

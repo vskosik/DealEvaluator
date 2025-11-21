@@ -32,5 +32,8 @@ public class RehabLineItemConfiguration : IEntityTypeConfiguration<RehabLineItem
         builder.Property(x => x.Notes)
             .IsRequired(false)
             .HasMaxLength(500);
+
+        // Ignore computed property
+        builder.Ignore(x => x.EstimatedCost);
     }
 }

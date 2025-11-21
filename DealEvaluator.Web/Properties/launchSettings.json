@@ -24,8 +24,7 @@
       "launchBrowser": true,
       "applicationUrl": "https://localhost:7086;http://localhost:5044",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "RAPID_API_KEY": "79103aa4f7msh48c3ff23a0d9280p10d4a6jsn53cfb53156f3"
+        "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
     "IIS Express": {

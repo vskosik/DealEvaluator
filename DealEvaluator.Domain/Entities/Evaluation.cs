@@ -22,7 +22,6 @@ public class Evaluation
     public ICollection<Comparable> Comparables { get; set; } = new List<Comparable>();
     public RehabEstimate? RehabEstimate { get; set; }
 
-    // Computed property - repair cost from rehab estimate
-    [NotMapped]
+    // Computed - Ignored
     public int? RepairCost => RehabEstimate != null ? (int?)Math.Round(RehabEstimate.TotalCost) : null;
 }

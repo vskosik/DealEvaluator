@@ -1,0 +1,40 @@
+# Ignore build outputs
+**/bin/
+**/obj/
+**/out/
+
+# Ignore IDE files
+**/.vs/
+**/.vscode/
+**/.idea/
+**/*.user
+**/*.suo
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore git
+.git/
+.gitignore
+.gitattributes
+
+# Ignore documentation
+**/*.md
+!CLAUDE.md
+
+# Ignore test results
+**/TestResults/
+**/*.trx
+
+# Ignore NuGet packages
+**/*.nupkg
+
+# Ignore user secrets and local config
+**/appsettings.Development.json
+**/secrets.json
+
+# Ignore Docker files (no need to copy them into the image)
+**/Dockerfile*
+**/docker-compose*
+**/.dockerignore

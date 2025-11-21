@@ -28,5 +28,8 @@ public class RehabEstimateConfiguration : IEntityTypeConfiguration<RehabEstimate
             .WithOne(x => x.RehabEstimate)
             .HasForeignKey(x => x.RehabEstimateId)
             .OnDelete(DeleteBehavior.Cascade);
+        
+        // Ignore computed property
+        builder.Ignore(x => x.TotalCost);
     }
 }

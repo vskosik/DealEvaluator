@@ -23,9 +23,8 @@ public class ZillowApiService
     {
         _httpClient = httpClient;
         
-        //_apiKey = configuration["RapidApiKey"];
-        _apiKey = Environment.GetEnvironmentVariable("RAPID_API_KEY") 
-                  ?? throw new InvalidOperationException("RAPID_API_KEY is missing from environment variables");
+        _apiKey = configuration["RapidApiKey"]
+                  ?? throw new InvalidOperationException("RapidApiKey is missing in configuration");
 
         _rapidApiHost = configuration["ZillowRapidApiHost"] 
                          ?? throw new InvalidOperationException("ZillowRapidApiHost is missing in configuration");

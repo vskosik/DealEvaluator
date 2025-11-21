@@ -15,10 +15,8 @@ public class RehabLineItem
 
     public string? Notes { get; set; }
 
-    // Navigation properties
     public RehabEstimate RehabEstimate { get; set; }
-
-    // Computed property - total cost for this line item
-    [NotMapped]
+    
+    // Computed - Ignored
     public decimal EstimatedCost => Quantity * UnitCost;
 }

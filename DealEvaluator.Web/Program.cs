@@ -44,6 +44,14 @@ public class Program
         
         var app = builder.Build();
 
+        // Auto-apply migrations in Development
+        if (app.Environment.IsDevelopment())
+        {
+            using var scope = app.Services.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<DealEvaluatorContext>();
+            await dbContext.Database.EnsureCreatedAsync();
+        }
+
         if (!app.Environment.IsDevelopment())
         {
             app.UseExceptionHandler("/Home/Error");
@@ -54,8 +62,12 @@ public class Program
         app.UseSwaggerUI();
 
         app.MapIdentityApi<User>();
-        
-        app.UseHttpsRedirection();
+
+        // Only use HTTPS redirection in production
+        if (!app.Environment.IsDevelopment())
+        {
+            app.UseHttpsRedirection();
+        }
         app.UseStaticFiles();
 
         app.UseRouting();

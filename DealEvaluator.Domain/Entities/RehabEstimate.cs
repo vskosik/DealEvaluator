@@ -12,7 +12,6 @@ public class RehabEstimate
     public Evaluation Evaluation { get; set; }
     public ICollection<RehabLineItem> LineItems { get; set; } = new List<RehabLineItem>();
 
-    // Computed property - total cost from all line items
-    [NotMapped]
+    // Computed - Ignored
     public decimal TotalCost => LineItems?.Sum(x => x.EstimatedCost) ?? 0;
 }
