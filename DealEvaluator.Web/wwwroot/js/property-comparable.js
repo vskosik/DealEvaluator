@@ -406,6 +406,56 @@ PropertyPage.countActiveFilters = function(filters) {
 };
 
 /**
+ * Formats a date from Unix timestamp
+ */
+PropertyPage.formatDate = function(timestamp) {
+    if (!timestamp) return 'N/A';
+    const date = new Date(timestamp);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+};
+
+/**
+ * Creates custom marker icon with price label
+ */
+PropertyPage.createCustomMarkerIcon = function(property) {
+    const price = property.price ? `$${(property.price / 1000).toFixed(0)}k` : 'N/A';
+    const beds = property.bedrooms || '?';
+    const baths = property.bathrooms || '?';
+
+    return L.divIcon({
+        className: 'custom-marker-icon',
+        html: `
+            <div style="position: relative;">
+                <div style="
+                    position: absolute;
+                    bottom: 35px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: white;
+                    border: 2px solid #0066cc;
+                    border-radius: 4px;
+                    padding: 2px 6px;
+                    font-size: 11px;
+                    font-weight: bold;
+                    white-space: nowrap;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                    color: #333;
+                ">
+                    ${price} · ${beds}bd ${baths}ba
+                </div>
+                <svg width="30" height="40" viewBox="0 0 30 40" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
+                    <path d="M15 0C6.7 0 0 6.7 0 15c0 8.3 15 25 15 25s15-16.7 15-25c0-8.3-6.7-15-15-15z" fill="#0066cc"/>
+                    <circle cx="15" cy="15" r="6" fill="white"/>
+                </svg>
+            </div>
+        `,
+        iconSize: [30, 40],
+        iconAnchor: [15, 40],
+        popupAnchor: [0, -40]
+    });
+};
+
+/**
  * Updates map markers to show only filtered properties
  */
 PropertyPage.updateMapMarkers = function(filteredProperties) {
@@ -418,8 +468,12 @@ PropertyPage.updateMapMarkers = function(filteredProperties) {
     // Add markers for filtered properties
     filteredProperties.forEach(property => {
         if (property.latitude && property.longitude) {
-            const marker = L.marker([property.latitude, property.longitude])
+            const customIcon = PropertyPage.createCustomMarkerIcon(property);
+            const marker = L.marker([property.latitude, property.longitude], { icon: customIcon })
                 .addTo(PropertyPage.comparableMap);
+
+            // Format the sold date
+            const formattedDate = PropertyPage.formatDate(property.dateSold);
 
             // Create popup content with property details and Add button
             const popupContent = `
@@ -431,7 +485,14 @@ PropertyPage.updateMapMarkers = function(filteredProperties) {
                         <strong>Bed/Bath:</strong> ${property.bedrooms || '?'} / ${property.bathrooms || '?'}<br>
                         ${property.propertyType ? `<strong>Type:</strong> ${property.propertyType}<br>` : ''}
                         ${property.listingStatus ? `<strong>Status:</strong> ${property.listingStatus}<br>` : ''}
-                        <strong>Sold On:</strong> ${property.dateSold || "N/A"}
+                        <strong>Sold On:</strong> ${formattedDate}<br>
+                        ${property.detailUrl ? `<a href="https://zillow.com${property.detailUrl}" target="_blank" class="btn btn-sm btn-link p-0 mt-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-box-arrow-up-right me-1" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"/>
+                                <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"/>
+                            </svg>
+                            View on Zillow
+                        </a><br>` : ''}
                     </div>
                     <button class="btn btn-sm btn-primary w-100" onclick="PropertyPage.addAsComparable('${PropertyPage.encodeProperty(property)}')">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-plus-circle me-1" viewBox="0 0 16 16">
@@ -478,6 +539,7 @@ PropertyPage.addAsComparable = async function(encodedProperty) {
         SaleDate: saleDate,
         ListingStatus: PropertyPage.mapListingStatus(property.listingStatus),
         Source: 'Zillow',
+        ListingUrl: property.detailUrl || null,
         Address: addressParts.street || property.address || '',
         City: addressParts.city || '',
         State: addressParts.state || '',

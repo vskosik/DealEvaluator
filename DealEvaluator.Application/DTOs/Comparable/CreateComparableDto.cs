@@ -8,6 +8,7 @@ public class CreateComparableDto
     public DateTime? SaleDate { get; set; }
     public ListingStatuses ListingStatus { get; set; }
     public string Source { get; set; }
+    public string ListingUrl { get; set; }
 
     // From RealEstateEntity
     public string Address { get; set; }

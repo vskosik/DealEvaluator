@@ -9,6 +9,7 @@ public class ComparableDto
     public DateTime? SaleDate { get; set; }
     public ListingStatuses ListingStatus { get; set; }
     public string Source { get; set; }
+    public string ListingUrl { get; set; }
 
     // From RealEstateEntity
     public string Address { get; set; }
@@ -21,6 +22,6 @@ public class ComparableDto
     public int? Bathrooms { get; set; }
     public int? LotSizeSqft { get; set; }
     public int? YearBuilt { get; set; }
-    
+
     public ComparableType ComparableType { get; set; }
 }
