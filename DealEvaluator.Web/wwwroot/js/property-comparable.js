@@ -15,12 +15,12 @@
  * Loads market data for the property's zip code from the API
  */
 PropertyPage.loadMarketData = async function() {
-    // Show loading, hide error and map
-    const loadingIndicator = document.getElementById('loading-indicator');
+    // Show loading overlay
+    PropertyPage.showLoadingOverlay(`Loading market data for zip code ${PropertyPage.zipCode}...`);
+
     const mapContainer = document.getElementById('map-container');
     const errorMessage = document.getElementById('error-message');
 
-    if (loadingIndicator) loadingIndicator.style.display = 'block';
     if (mapContainer) mapContainer.style.display = 'none';
     if (errorMessage) errorMessage.style.display = 'none';
 
@@ -37,7 +37,7 @@ PropertyPage.loadMarketData = async function() {
         console.error('Error fetching market data:', error);
         PropertyPage.showError('Failed to load market data. Please try again.');
     } finally {
-        if (loadingIndicator) loadingIndicator.style.display = 'none';
+        PropertyPage.hideLoadingOverlay();
     }
 };
 
@@ -102,6 +102,9 @@ PropertyPage.initializeComparableMap = async function(properties) {
 
     // Add markers using the filtering system (this will apply default filters)
     PropertyPage.applyFilters();
+
+    // Initialize zip code boundaries feature
+    await PropertyPage.initializeZipCodeBoundaries();
 
     console.log(`Comparable map initialized with ${propsWithCoords.length} properties`);
 };
@@ -592,19 +595,488 @@ PropertyPage.addAsComparable = async function(encodedProperty) {
 const addComparableModal = document.getElementById('addComparableModal');
 if (addComparableModal) {
     addComparableModal.addEventListener('shown.bs.modal', function() {
-        PropertyPage.loadMarketData();
-    });
-
-    // Clean up map when modal is hidden
-    addComparableModal.addEventListener('hidden.bs.modal', function() {
-        if (PropertyPage.comparableMap) {
-            PropertyPage.comparableMap.remove();
-            PropertyPage.comparableMap = null;
-            PropertyPage.allProperties = [];
-            PropertyPage.propertyMarkers = [];
+        // Only load data if not already loaded
+        if (!PropertyPage.comparableMap) {
+            PropertyPage.loadMarketData();
+        } else {
+            // Map already exists, just make sure it's visible and properly sized
+            const mapContainer = document.getElementById('map-container');
+            if (mapContainer) {
+                mapContainer.style.display = 'block';
+            }
+            // Invalidate size to handle any container size changes
+            setTimeout(() => {
+                if (PropertyPage.comparableMap) {
+                    PropertyPage.comparableMap.invalidateSize();
+                }
+            }, 100);
         }
     });
 }
+
+// ============================================================
+// ZIP CODE BOUNDARY FEATURES
+// ============================================================
+
+// Initialize state for zip code boundaries
+PropertyPage.zipCodeBoundaries = {
+    all: [],              // All boundaries within 50 miles
+    neighbors: [],        // Immediate neighbor boundaries
+    loaded: [],           // Zip codes that have been loaded
+    layer: null,          // Leaflet GeoJSON layer
+    currentZipBoundary: null  // Boundary of the current property's zip code
+};
+
+/**
+ * Fetches zip code boundaries within specified radius via backend API
+ */
+PropertyPage.fetchZipCodeBoundaries = async function(centerLat, centerLng, radiusMeters) {
+    try {
+        console.log(`Fetching zip code boundaries within ${radiusMeters}m of ${centerLat},${centerLng}`);
+
+        // Call our backend API endpoint (avoids CORS issues)
+        const response = await fetch(`/Property/GetZipCodeBoundaries?lat=${centerLat}&lng=${centerLng}&radiusMeters=${radiusMeters}`);
+
+        if (!response.ok) {
+            throw new Error(`Backend API error: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.error || 'Unknown error from backend');
+        }
+
+        const data = result.data;
+
+        // Data is now a GeoJSON FeatureCollection from local files
+        if (!data || !data.features) {
+            console.warn('No features in response');
+            return [];
+        }
+
+        const features = data.features;
+        console.log(`Fetched ${features.length} zip code boundaries from local files`);
+
+        // Log zip codes for debugging
+        const returnedZips = features.map(f => f.properties?.ZCTA5CE10 || f.properties?.zipCode || f.properties?.zip).filter(z => z);
+        console.log('Zip codes returned:', returnedZips);
+
+        // Normalize the properties to ensure zipCode field exists
+        const normalizedFeatures = features.map(f => {
+            const zipCode = f.properties?.ZCTA5CE10 || f.properties?.zipCode || f.properties?.zip || f.properties?.GEOID10;
+            return {
+                ...f,
+                properties: {
+                    ...f.properties,
+                    zipCode: zipCode
+                }
+            };
+        });
+
+        console.log('Normalized zip codes:', normalizedFeatures.map(f => f.properties.zipCode));
+        return normalizedFeatures;
+    } catch (error) {
+        console.error('Error fetching zip code boundaries:', error);
+        return [];
+    }
+};
+
+/**
+ * Converts Overpass API element to GeoJSON Feature
+ */
+PropertyPage.convertOverpassToGeoJSON = function(element) {
+    try {
+        const zipCode = element.tags.postal_code;
+
+        // Build coordinates from members
+        const coordinates = [];
+        const outerWays = element.members.filter(m => m.role === 'outer' || m.role === '');
+
+        for (const member of outerWays) {
+            if (member.geometry && member.geometry.length > 0) {
+                const ring = member.geometry.map(node => [node.lon, node.lat]);
+                coordinates.push(ring);
+            }
+        }
+
+        if (coordinates.length === 0) {
+            return null;
+        }
+
+        return {
+            type: 'Feature',
+            properties: {
+                zipCode: zipCode,
+                name: element.tags.name || zipCode
+            },
+            geometry: {
+                type: coordinates.length === 1 ? 'Polygon' : 'MultiPolygon',
+                coordinates: coordinates.length === 1 ? coordinates[0] : [coordinates]
+            }
+        };
+    } catch (error) {
+        console.error('Error converting Overpass element:', error);
+        return null;
+    }
+};
+
+/**
+ * Identifies immediate neighbor zip codes (those that share a boundary)
+ */
+PropertyPage.identifyNeighborZipCodes = function(currentZipBoundary, allBoundaries) {
+    if (!currentZipBoundary || !allBoundaries || allBoundaries.length === 0) {
+        console.warn('Cannot identify neighbors: missing boundary data');
+        return [];
+    }
+
+    console.log(`Identifying neighbors for zip ${currentZipBoundary.properties.zipCode} from ${allBoundaries.length} boundaries`);
+
+    const neighbors = [];
+    const currentZipCode = currentZipBoundary.properties.zipCode;
+
+    for (const boundary of allBoundaries) {
+        // Skip the current zip code itself
+        if (boundary.properties.zipCode === currentZipCode) {
+            continue;
+        }
+
+        try {
+            // Use Turf.js to check if polygons touch or intersect
+            const touches = turf.booleanTouches(currentZipBoundary, boundary);
+            const overlaps = turf.booleanOverlap(currentZipBoundary, boundary);
+
+            if (touches || overlaps) {
+                neighbors.push(boundary);
+                console.log(`Found neighbor: ${boundary.properties.zipCode}`);
+            }
+        } catch (error) {
+            console.warn(`Error checking boundary for ${boundary.properties.zipCode}:`, error);
+        }
+    }
+
+    console.log(`Found ${neighbors.length} immediate neighbors`);
+    return neighbors;
+};
+
+/**
+ * Displays zip code boundaries on the map
+ */
+PropertyPage.displayZipCodeBoundaries = function(boundaries) {
+    if (!PropertyPage.comparableMap || !boundaries || boundaries.length === 0) {
+        console.warn('Cannot display boundaries: missing map or boundaries');
+        return;
+    }
+
+    console.log(`Displaying ${boundaries.length} zip code boundaries`);
+
+    // Remove existing boundary layer if present
+    if (PropertyPage.zipCodeBoundaries.layer) {
+        PropertyPage.comparableMap.removeLayer(PropertyPage.zipCodeBoundaries.layer);
+    }
+
+    // Create GeoJSON layer
+    PropertyPage.zipCodeBoundaries.layer = L.geoJSON(boundaries, {
+        style: function(feature) {
+            return {
+                color: '#0066cc',
+                weight: 2,
+                opacity: 0.7,
+                fillColor: '#0066cc',
+                fillOpacity: 0.05,
+                className: 'zip-boundary'
+            };
+        },
+        onEachFeature: function(feature, layer) {
+            const zipCode = feature.properties.zipCode;
+
+            // Add hover effects
+            layer.on('mouseover', function(e) {
+                const layer = e.target;
+                layer.setStyle({
+                    weight: 3,
+                    fillOpacity: 0.15,
+                    cursor: 'pointer'
+                });
+
+                // Show zip code label tooltip
+                layer.bindTooltip(`Zip: ${zipCode}`, {
+                    permanent: false,
+                    direction: 'center',
+                    className: 'zip-tooltip'
+                }).openTooltip();
+            });
+
+            layer.on('mouseout', function(e) {
+                const layer = e.target;
+                layer.setStyle({
+                    weight: 2,
+                    fillOpacity: 0.05
+                });
+                layer.closeTooltip();
+            });
+
+            // Add click handler
+            layer.on('click', function(e) {
+                L.DomEvent.stopPropagation(e);
+                PropertyPage.loadComparablesForZipCode(zipCode);
+            });
+        }
+    }).addTo(PropertyPage.comparableMap);
+
+    console.log('Zip code boundaries displayed successfully');
+};
+
+/**
+ * Loads comparables for a specific zip code when boundary is clicked
+ */
+PropertyPage.loadComparablesForZipCode = async function(zipCode) {
+    // Check if already loaded
+    if (PropertyPage.zipCodeBoundaries.loaded.includes(zipCode)) {
+        console.log(`Zip code ${zipCode} already loaded, skipping`);
+        return;
+    }
+
+    console.log(`Loading comparables for zip code: ${zipCode}`);
+
+    // Show loading indicator
+    PropertyPage.showZipCodeLoadingMessage(zipCode);
+
+    try {
+        const response = await fetch(`/Property/GetMarketData?zipCode=${zipCode}`);
+        const data = await response.json();
+
+        if (data.success && data.properties && data.properties.length > 0) {
+            console.log(`Loaded ${data.properties.length} properties for zip ${zipCode}`);
+
+            // Filter out the main property
+            const mainAddress = PropertyPage.mainProperty.address.toLowerCase().trim();
+            const filteredProperties = data.properties.filter(p => {
+                if (!p.address) return true;
+                const compAddress = p.address.toLowerCase().trim();
+                return !compAddress.includes(mainAddress) && !mainAddress.includes(compAddress);
+            });
+
+            // Add to allProperties array
+            PropertyPage.allProperties = PropertyPage.allProperties.concat(filteredProperties);
+
+            // Mark as loaded
+            PropertyPage.zipCodeBoundaries.loaded.push(zipCode);
+
+            // Re-apply filters to show new properties
+            PropertyPage.applyFilters();
+
+            // Update counts
+            const totalCountEl = document.getElementById('total-count');
+            if (totalCountEl) totalCountEl.textContent = PropertyPage.allProperties.length;
+
+            console.log(`Total properties now: ${PropertyPage.allProperties.length}`);
+        } else {
+            console.warn(`No properties found for zip code ${zipCode}`);
+        }
+    } catch (error) {
+        console.error(`Error loading comparables for zip ${zipCode}:`, error);
+        PropertyPage.showError(`Failed to load comparables for zip code ${zipCode}`);
+    } finally {
+        PropertyPage.hideZipCodeLoadingMessage();
+    }
+};
+
+/**
+ * Shows loading message for zip code
+ */
+PropertyPage.showZipCodeLoadingMessage = function(zipCode) {
+    const loadingIndicator = document.getElementById('loading-indicator');
+    if (loadingIndicator) {
+        loadingIndicator.innerHTML = `
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Loading data for zip code ${zipCode}...</p>
+        `;
+        loadingIndicator.style.display = 'block';
+    }
+};
+
+/**
+ * Hides loading message
+ */
+PropertyPage.hideZipCodeLoadingMessage = function() {
+    const loadingIndicator = document.getElementById('loading-indicator');
+    if (loadingIndicator) {
+        loadingIndicator.style.display = 'none';
+    }
+};
+
+/**
+ * Geocodes a zip code to get its center coordinates via backend API
+ */
+PropertyPage.geocodeZipCode = async function(zipCode) {
+    try {
+        console.log(`Geocoding zip code: ${zipCode}`);
+
+        // Call our backend API endpoint (avoids CORS issues)
+        const response = await fetch(`/Property/GeocodeZipCode?zipCode=${zipCode}`);
+
+        if (!response.ok) {
+            throw new Error(`Backend API error: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.error || 'Unknown error from backend');
+        }
+
+        const data = result.data;
+
+        if (data && data.length > 0) {
+            const coords = {
+                lat: parseFloat(data[0].lat),
+                lng: parseFloat(data[0].lon)
+            };
+            console.log(`Geocoded zip ${zipCode} to:`, coords);
+            return coords;
+        } else {
+            console.warn(`No results found for zip code ${zipCode}`);
+            return null;
+        }
+    } catch (error) {
+        console.error(`Error geocoding zip code ${zipCode}:`, error);
+        return null;
+    }
+};
+
+/**
+ * Initializes zip code boundaries feature after map is loaded
+ */
+PropertyPage.initializeZipCodeBoundaries = async function() {
+    try {
+        console.log('Initializing zip code boundaries feature...');
+
+        // Get center point - use property coordinates or geocode zip code
+        let centerLat, centerLng;
+
+        if (PropertyPage.mainProperty.latitude && PropertyPage.mainProperty.longitude) {
+            centerLat = PropertyPage.mainProperty.latitude;
+            centerLng = PropertyPage.mainProperty.longitude;
+            console.log('Using property coordinates:', centerLat, centerLng);
+        } else {
+            // Geocode the zip code to get center coordinates
+            console.log('Property has no coordinates, geocoding zip code:', PropertyPage.zipCode);
+            const coords = await PropertyPage.geocodeZipCode(PropertyPage.zipCode);
+
+            if (!coords) {
+                console.warn('Could not geocode zip code, cannot fetch zip boundaries');
+                return;
+            }
+
+            centerLat = coords.lat;
+            centerLng = coords.lng;
+            console.log('Geocoded zip code to:', centerLat, centerLng);
+        }
+
+        // Fetch all boundaries within 5 miles (8047 meters)
+        const radiusMeters = 8047;
+        const allBoundaries = await PropertyPage.fetchZipCodeBoundaries(centerLat, centerLng, radiusMeters);
+
+        if (allBoundaries.length === 0) {
+            console.warn('No zip code boundaries found');
+            return;
+        }
+
+        PropertyPage.zipCodeBoundaries.all = allBoundaries;
+
+        // Find the current zip code's boundary
+        const currentZipBoundary = allBoundaries.find(
+            b => b.properties.zipCode === PropertyPage.zipCode
+        );
+
+        if (!currentZipBoundary) {
+            console.warn(`Could not find boundary for current zip code ${PropertyPage.zipCode}`);
+            return;
+        }
+
+        PropertyPage.zipCodeBoundaries.currentZipBoundary = currentZipBoundary;
+
+        // Identify immediate neighbors
+        const neighbors = PropertyPage.identifyNeighborZipCodes(currentZipBoundary, allBoundaries);
+        PropertyPage.zipCodeBoundaries.neighbors = neighbors;
+
+        // Display neighbor boundaries
+        PropertyPage.displayZipCodeBoundaries(neighbors);
+
+        console.log('Zip code boundaries initialized successfully');
+    } catch (error) {
+        console.error('Error initializing zip code boundaries:', error);
+    }
+};
+
+// ============================================================
+// LOADING OVERLAY
+// ============================================================
+
+/**
+ * Shows a loading overlay over the map
+ */
+PropertyPage.showLoadingOverlay = function(message) {
+    // Remove existing overlay if present
+    PropertyPage.hideLoadingOverlay();
+
+    // Create overlay element
+    const overlay = document.createElement('div');
+    overlay.id = 'loading-overlay';
+    overlay.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.9);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    `;
+
+    overlay.innerHTML = `
+        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 text-dark fw-bold">${message || 'Loading...'}</p>
+    `;
+
+    // Add to modal body
+    const modalBody = document.querySelector('#addComparableModal .modal-body');
+    if (modalBody) {
+        modalBody.appendChild(overlay);
+    }
+};
+
+/**
+ * Hides the loading overlay
+ */
+PropertyPage.hideLoadingOverlay = function() {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) {
+        overlay.remove();
+    }
+};
+
+/**
+ * Shows loading message for zip code
+ */
+PropertyPage.showZipCodeLoadingMessage = function(zipCode) {
+    PropertyPage.showLoadingOverlay(`Loading data for zip code ${zipCode}...`);
+};
+
+/**
+ * Hides loading message
+ */
+PropertyPage.hideZipCodeLoadingMessage = function() {
+    PropertyPage.hideLoadingOverlay();
+};
 
 // ============================================================
 // GLOBAL FUNCTION ALIASES

@@ -31,6 +31,7 @@
 
     <ItemGroup>
       <Folder Include="Middleware\" />
+      <Folder Include="wwwroot\data\" />
     </ItemGroup>
 
     <ItemGroup>
