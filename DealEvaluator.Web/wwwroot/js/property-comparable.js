@@ -25,7 +25,7 @@ PropertyPage.loadMarketData = async function() {
     if (errorMessage) errorMessage.style.display = 'none';
 
     try {
-        const response = await fetch(`/Property/GetMarketData?zipCode=${PropertyPage.zipCode}`);
+        const response = await fetch(`/Property/GetMarketData?propertyId=${PropertyPage.propertyId}`);
         const data = await response.json();
 
         if (data.success && data.properties && data.properties.length > 0) {
@@ -228,9 +228,9 @@ PropertyPage.resetFilters = function() {
         if (element) element.checked = false;
     });
 
-    // Reset listing status checkboxes (only Sold checked by default)
+    // Reset listing status checkboxes
     const statusIds = {
-        'filter-status-sold': true,
+        'filter-status-sold': false,
         'filter-status-for-sale': false,
         'filter-status-pending': false,
         'filter-status-off-market': false
@@ -624,7 +624,8 @@ PropertyPage.zipCodeBoundaries = {
     neighbors: [],        // Immediate neighbor boundaries
     loaded: [],           // Zip codes that have been loaded
     layer: null,          // Leaflet GeoJSON layer
-    currentZipBoundary: null  // Boundary of the current property's zip code
+    currentZipBoundary: null,  // Boundary of the current property's zip code
+    layers: {}            // Map of zipCode -> Leaflet layer for managing tooltips
 };
 
 /**
@@ -790,21 +791,39 @@ PropertyPage.displayZipCodeBoundaries = function(boundaries) {
         onEachFeature: function(feature, layer) {
             const zipCode = feature.properties.zipCode;
 
+            // Store reference to layer for later manipulation
+            PropertyPage.zipCodeBoundaries.layers[zipCode] = layer;
+
+            // Add permanent "Click to Load" label
+            layer.bindTooltip(`
+                <div style="
+                    background: #0066cc;
+                    color: white;
+                    padding: 6px 12px;
+                    border-radius: 4px;
+                    font-size: 12px;
+                    font-weight: bold;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                    cursor: pointer;
+                    white-space: nowrap;
+                ">
+                    Click to Load ${zipCode}
+                </div>
+            `, {
+                permanent: true,
+                direction: 'center',
+                className: 'zip-boundary-label',
+                opacity: 0.95
+            });
+
             // Add hover effects
             layer.on('mouseover', function(e) {
                 const layer = e.target;
                 layer.setStyle({
                     weight: 3,
-                    fillOpacity: 0.15,
+                    fillOpacity: 0.2,
                     cursor: 'pointer'
                 });
-
-                // Show zip code label tooltip
-                layer.bindTooltip(`Zip: ${zipCode}`, {
-                    permanent: false,
-                    direction: 'center',
-                    className: 'zip-tooltip'
-                }).openTooltip();
             });
 
             layer.on('mouseout', function(e) {
@@ -813,7 +832,6 @@ PropertyPage.displayZipCodeBoundaries = function(boundaries) {
                     weight: 2,
                     fillOpacity: 0.05
                 });
-                layer.closeTooltip();
             });
 
             // Add click handler
@@ -843,7 +861,7 @@ PropertyPage.loadComparablesForZipCode = async function(zipCode) {
     PropertyPage.showZipCodeLoadingMessage(zipCode);
 
     try {
-        const response = await fetch(`/Property/GetMarketData?zipCode=${zipCode}`);
+        const response = await fetch(`/Property/GetMarketData?propertyId=${PropertyPage.propertyId}&zipCode=${zipCode}`);
         const data = await response.json();
 
         if (data.success && data.properties && data.properties.length > 0) {
@@ -862,6 +880,13 @@ PropertyPage.loadComparablesForZipCode = async function(zipCode) {
 
             // Mark as loaded
             PropertyPage.zipCodeBoundaries.loaded.push(zipCode);
+
+            // Remove the "Click to Load" label from the boundary
+            const layer = PropertyPage.zipCodeBoundaries.layers[zipCode];
+            if (layer) {
+                layer.unbindTooltip();
+                console.log(`Removed label for zip ${zipCode}`);
+            }
 
             // Re-apply filters to show new properties
             PropertyPage.applyFilters();

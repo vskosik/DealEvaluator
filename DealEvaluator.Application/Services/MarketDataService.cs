@@ -22,33 +22,39 @@ public class MarketDataService : IMarketDataService
         _logger = logger;
     }
 
-    public async Task<List<ZillowProperty>> GetMarketDataForZipCodeAsync(string zipCode, string keywords = "")
+    public async Task<List<ZillowProperty>> GetMarketDataForZipCodeAsync(string zipCode, string homeType, string keywords = "")
     {
-        _logger.LogInformation("Fetching market data for zip code: {ZipCode}, keywords: {Keywords}", zipCode, keywords);
+        _logger.LogInformation("Fetching market data for zip code: {ZipCode}, homeType: {HomeType}, keywords: {Keywords}", zipCode, homeType, keywords);
 
-        var cachedData = await _marketDataRepository.GetByZipCodeAndKeywordsAsync(zipCode, keywords);
+        var cachedData = await _marketDataRepository.GetByZipCodeAndKeywordsAsync(zipCode, homeType, keywords);
 
         if (cachedData != null && !IsExpired(cachedData))
         {
-            _logger.LogInformation("Using cached market data for zip code: {ZipCode}, keywords: {Keywords}", zipCode, keywords);
+            _logger.LogInformation("Using cached market data for zip code: {ZipCode}, homeType: {HomeType}, keywords: {Keywords}", zipCode, homeType, keywords);
             return ParseRawJson(cachedData.RawJson);
         }
 
-        _logger.LogInformation("Cache miss or expired for zip code: {ZipCode}, keywords: {Keywords}. Fetching from Zillow API.", zipCode, keywords);
+        _logger.LogInformation("Cache miss or expired for zip code: {ZipCode}, homeType: {HomeType}, keywords: {Keywords}. Fetching from Zillow API.", zipCode, homeType, keywords);
 
-        return await RefreshMarketDataAsync(zipCode, keywords);
+        return await RefreshMarketDataAsync(zipCode, homeType, keywords);
     }
 
-    public async Task<List<ZillowProperty>> RefreshMarketDataAsync(string zipCode, string keywords = "")
+    public async Task<List<ZillowProperty>> RefreshMarketDataAsync(string zipCode, string homeType, string keywords = "")
     {
-        _logger.LogInformation("Refreshing market data from Zillow API for zip code: {ZipCode}, keywords: {Keywords}", zipCode, keywords);
+        _logger.LogInformation("Refreshing market data from Zillow API for zip code: {ZipCode}, homeType: {HomeType}, keywords: {Keywords}", zipCode, homeType, keywords);
 
-        // Default search results
+        // Parse homeType string to enum
+        if (!Enum.TryParse<ZillowHomeType>(homeType, out var parsedHomeType))
+        {
+            _logger.LogWarning("Invalid home type: {HomeType}. Defaulting to Houses.", homeType);
+            parsedHomeType = ZillowHomeType.Houses;
+        }
+
         var searchRequest = new ZillowSearchRequest
         {
             Location = zipCode,
             StatusType = ZillowStatusType.RecentlySold,
-            HomeType = ZillowHomeType.Houses,
+            HomeType = parsedHomeType,
             Sort = ZillowSort.Newest,
             SoldInLast = "12m",
             Keywords = string.IsNullOrWhiteSpace(keywords) ? null : keywords
@@ -58,15 +64,16 @@ public class MarketDataService : IMarketDataService
 
         if (response?.Properties == null || response.Properties.Count == 0)
         {
-            _logger.LogWarning("No properties found for zip code: {ZipCode}, keywords: {Keywords}", zipCode, keywords);
+            _logger.LogWarning("No properties found for zip code: {ZipCode}, homeType: {HomeType}, keywords: {Keywords}", zipCode, homeType, keywords);
             return new List<ZillowProperty>();
         }
 
-        _logger.LogInformation("Found {Count} properties for zip code: {ZipCode}, keywords: {Keywords}", response.Properties.Count, zipCode, keywords);
+        _logger.LogInformation("Found {Count} properties for zip code: {ZipCode}, homeType: {HomeType}, keywords: {Keywords}", response.Properties.Count, zipCode, homeType, keywords);
 
         var marketData = new MarketData
         {
             ZipCode = zipCode,
+            HomeType = homeType,
             Keywords = keywords,
             Source = "Zillow",
             RawJson = JsonSerializer.Serialize(response.Properties),
@@ -79,9 +86,9 @@ public class MarketDataService : IMarketDataService
         return response.Properties;
     }
 
-    public async Task<bool> HasFreshDataAsync(string zipCode, string keywords = "")
+    public async Task<bool> HasFreshDataAsync(string zipCode, string homeType, string keywords = "")
     {
-        return await _marketDataRepository.IsFreshDataAvailableAsync(zipCode, keywords);
+        return await _marketDataRepository.IsFreshDataAvailableAsync(zipCode, homeType, keywords);
     }
 
     // TODO: Implement cache expiration logic to automatically refresh stale data

@@ -3,6 +3,7 @@ using DealEvaluator.Application.DTOs.Comparable;
 using DealEvaluator.Application.DTOs.Evaluation;
 using DealEvaluator.Application.DTOs.Property;
 using DealEvaluator.Application.Interfaces;
+using DealEvaluator.Application.Mappings;
 using DealEvaluator.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -303,18 +304,27 @@ public class PropertyController : BaseAuthorizedController
         }
     }
 
-    // GET: /Property/GetMarketData?zipCode=12345 - API endpoint for fetching market data
+    // GET: /Property/GetMarketData?propertyId=5&zipCode=60606 - API endpoint for fetching market data based on property type
     [HttpGet]
-    public async Task<IActionResult> GetMarketData(string zipCode)
+    public async Task<IActionResult> GetMarketData(int propertyId, string? zipCode = null)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(zipCode))
+            var (error, property) = await GetAuthorizedPropertyAsync(propertyId);
+            if (error != null)
             {
-                return BadRequest("Zip code is required");
+                return Json(new { success = false, error = "Unauthorized or property not found" });
             }
 
-            var marketData = await _marketDataService.GetMarketDataForZipCodeAsync(zipCode);
+            // Map property type to Zillow home type
+            var homeType = PropertyTypeMapper.ToZillowHomeTypeString(property!.PropertyType);
+
+            // Use provided zipCode or default to property's zipCode
+            var targetZipCode = zipCode ?? property.ZipCode;
+
+            var marketData = await _marketDataService.GetMarketDataForZipCodeAsync(
+                targetZipCode,
+                homeType);
 
             return Json(new
             {
@@ -324,7 +334,7 @@ public class PropertyController : BaseAuthorizedController
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error fetching market data for zip code: {ZipCode}", zipCode);
+            _logger.LogError(ex, "Error fetching market data for property ID {PropertyId}, zip code {ZipCode}", propertyId, zipCode ?? "default");
             return Json(new
             {
                 success = false,

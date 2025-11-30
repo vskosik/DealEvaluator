@@ -14,6 +14,10 @@ public class MarketDataConfiguration : IEntityTypeConfiguration<MarketData>
             .IsRequired()
             .HasMaxLength(10);
 
+        builder.Property(x => x.HomeType)
+            .IsRequired()
+            .HasMaxLength(50);
+
         // Create index on ZipCode for fast lookups
         builder.HasIndex(x => x.ZipCode);
 
@@ -27,8 +31,8 @@ public class MarketDataConfiguration : IEntityTypeConfiguration<MarketData>
         builder.Property(x => x.Keywords)
             .IsRequired(false)
             .HasDefaultValue("");
-        
-        builder.HasIndex(x => new { x.ZipCode, x.Keywords }).IsUnique();
+
+        builder.HasIndex(x => new { x.ZipCode, x.HomeType, x.Keywords }).IsUnique();
 
         builder.Property(x => x.FetchedAt)
             .IsRequired()
