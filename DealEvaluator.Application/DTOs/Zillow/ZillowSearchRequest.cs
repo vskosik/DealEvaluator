@@ -16,4 +16,5 @@ public class ZillowSearchRequest
     public int? IsBasementUnfinished { get; set; } // 1 to filter
     public int? IsPendingUnderContract { get; set; } // 1 to filter
     public string? Keywords { get; set; } // Separated by comma
+    public int Page { get; set; } = 1; // Page number for pagination
 }
