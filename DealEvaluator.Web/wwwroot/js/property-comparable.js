@@ -1001,8 +1001,8 @@ PropertyPage.initializeZipCodeBoundaries = async function() {
             console.log('Geocoded zip code to:', centerLat, centerLng);
         }
 
-        // Fetch all boundaries within 5 miles (8047 meters)
-        const radiusMeters = 8047;
+        // Fetch boundaries to get only immediate neighbors
+        const radiusMeters = 4828;
         const allBoundaries = await PropertyPage.fetchZipCodeBoundaries(centerLat, centerLng, radiusMeters);
 
         if (allBoundaries.length === 0) {
@@ -1024,11 +1024,13 @@ PropertyPage.initializeZipCodeBoundaries = async function() {
 
         PropertyPage.zipCodeBoundaries.currentZipBoundary = currentZipBoundary;
 
-        // Identify immediate neighbors
+        // Identify ONLY immediate neighbors (zip codes that physically touch the current zip)
         const neighbors = PropertyPage.identifyNeighborZipCodes(currentZipBoundary, allBoundaries);
         PropertyPage.zipCodeBoundaries.neighbors = neighbors;
 
-        // Display neighbor boundaries
+        console.log(`Found ${neighbors.length} immediate neighbor zip codes from ${allBoundaries.length} zips in radius`);
+
+        // Display only immediate neighbor boundaries
         PropertyPage.displayZipCodeBoundaries(neighbors);
 
         console.log('Zip code boundaries initialized successfully');
