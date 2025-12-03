@@ -1,0 +1,143 @@
+@model List<DealEvaluator.Application.DTOs.Comparable.ComparableDto>
+
+@if (Model.Any())
+{
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Address</th>
+                    <th>Type</th>
+                    <th>Price</th>
+                    <th>Sqft</th>
+                    <th>Bed/Bath</th>
+                    <th>Sale Date</th>
+                    <th>Status</th>
+                    <th>Source</th>
+                    <th>Link</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var comp in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="fw-bold">@comp.Address</div>
+                            <small class="text-muted">@comp.City, @comp.State @comp.ZipCode</small>
+                        </td>
+                        <td>
+                            <span class="badge @(comp.ComparableType.ToString() == "Arv" ? "bg-info" : "bg-warning")">
+                                @comp.ComparableType
+                            </span>
+                        </td>
+                        <td>
+                            @if (comp.Price.HasValue)
+                            {
+                                <span class="fw-bold text-success">$@comp.Price.Value.ToString("N0")</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">N/A</span>
+                            }
+                        </td>
+                        <td>
+                            @if (comp.Sqft.HasValue)
+                            {
+                                <span>@comp.Sqft.Value.ToString("N0") sf</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">N/A</span>
+                            }
+                        </td>
+                        <td>
+                            @if (comp.Bedrooms.HasValue || comp.Bathrooms.HasValue)
+                            {
+                                <span>@comp.Bedrooms / @comp.Bathrooms</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">N/A</span>
+                            }
+                        </td>
+                        <td>
+                            @if (comp.SaleDate.HasValue)
+                            {
+                                <span>@comp.SaleDate.Value.ToString("MMM d, yyyy")</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">N/A</span>
+                            }
+                        </td>
+                        <td>
+                            <span class="badge
+                                @(comp.ListingStatus.ToString() == "Sold" ? "bg-success" :
+                                  comp.ListingStatus.ToString() == "ForSale" ? "bg-primary" :
+                                  comp.ListingStatus.ToString() == "Pending" ? "bg-warning" : "bg-secondary")">
+                                @comp.ListingStatus
+                            </span>
+                        </td>
+                        <td>
+                            <small class="text-muted">@comp.Source</small>
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(comp.ListingUrl))
+                            {
+                                <a href="@("https://zillow.com" + comp.ListingUrl)"
+                                   target="_blank"
+                                   class="btn btn-sm btn-outline-primary"
+                                   title="View listing on Zillow">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-box-arrow-up-right" viewBox="0 0 16 16">
+                                        <path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"/>
+                                        <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"/>
+                                    </svg>
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                        <td>
+                            <form asp-controller="Property"
+                                  asp-action="DeleteComparable"
+                                  asp-route-comparableId="@comp.Id"
+                                  asp-route-propertyId="@ViewBag.PropertyId"
+                                  method="post"
+                                  onsubmit="return confirm('Are you sure you want to remove this comparable?');"
+                                  style="display: inline;">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                                    </svg>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="p-5 text-center">
+        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-house-slash text-muted mb-3" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M1.146 1.146a.5.5 0 0 0 0 .708l13 13a.5.5 0 0 0 .708-.708l-13-13a.5.5 0 0 0-.708 0M8 2.5 13.5 8V13h-3v-2a.5.5 0 0 0-.5-.5H6a.5.5 0 0 0-.5.5v2h-3V8.207l.854-.853L1.5 5.5v7a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5V8.5l-6-6z"/>
+        </svg>
+        <h5 class="mb-2">No Comparables Yet</h5>
+        <p class="text-muted mb-3">
+            Click "Add Comparable" to select properties from the map, or "Refresh Comps" to fetch from Zillow.
+        </p>
+        <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#addComparableModal">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search me-1" viewBox="0 0 16 16">
+                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+            </svg>
+            Find Comparables
+        </button>
+    </div>
+}

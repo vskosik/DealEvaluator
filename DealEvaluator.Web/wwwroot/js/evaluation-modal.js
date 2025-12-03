@@ -36,14 +36,31 @@ function evaluationModal() {
 
         // Initialize
         async init() {
-            // Listen for modal show event to auto-prefill (only attach once)
+            // Listen for modal show event to refresh comparables and auto-prefill
             const modal = document.getElementById('createEvaluationModal');
             if (modal && !this._eventListenerAttached) {
-                modal.addEventListener('shown.bs.modal', () => {
+                // Refresh comparables list before modal shows
+                modal.addEventListener('show.bs.modal', async () => {
+                    // Refresh comparables
+                    if (window.PropertyPageConfig && window.PropertyPageConfig.propertyId) {
+                        const response = await fetch(`/Property/GetComparablesSelectionList?propertyId=${window.PropertyPageConfig.propertyId}`);
+                        if (response.ok) {
+                            const html = await response.text();
+                            const container = document.getElementById('comparables-selection-container');
+                            if (container) {
+                                container.innerHTML = html;
+                                // Re-initialize checkbox listeners after refresh
+                                this.initializeComparableSelection();
+                            }
+                        }
+                    }
+
+                    // Auto-prefill rehab line items
                     if (this.lineItems.length === 0) {
-                        this.autoPrefillFromProperty();
+                        await this.autoPrefillFromProperty();
                     }
                 });
+
                 this._eventListenerAttached = true;
             }
 

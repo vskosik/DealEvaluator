@@ -276,7 +276,71 @@ public class PropertyController : BaseAuthorizedController
             return Json(new { success = false, error = $"Failed to add comparable: {ex.Message}" });
         }
     }
-    
+
+    // GET: Property/GetComparables - Get all comparables for a property
+    [HttpGet]
+    public async Task<IActionResult> GetComparables(int propertyId)
+    {
+        try
+        {
+            var (error, _) = await GetAuthorizedPropertyAsync(propertyId);
+            if (error != null)
+                return Json(new { success = false, error = "Unauthorized or property not found" });
+
+            var comparables = await PropertyService.GetComparablesAsync(propertyId);
+
+            return Json(new { success = true, comparables, count = comparables.Count });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting comparables for property ID {PropertyId}", propertyId);
+            return Json(new { success = false, error = $"Failed to get comparables: {ex.Message}" });
+        }
+    }
+
+    // GET: Property/GetComparablesTable - Get comparables table partial view
+    [HttpGet]
+    public async Task<IActionResult> GetComparablesTable(int propertyId)
+    {
+        try
+        {
+            var (error, _) = await GetAuthorizedPropertyAsync(propertyId);
+            if (error != null)
+                return BadRequest("Unauthorized or property not found");
+
+            var comparables = await PropertyService.GetComparablesAsync(propertyId);
+
+            ViewBag.PropertyId = propertyId;
+            return PartialView("_ComparablesTable", comparables);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting comparables table for property ID {PropertyId}", propertyId);
+            return StatusCode(500, "Failed to load comparables table");
+        }
+    }
+
+    // GET: Property/GetComparablesSelectionList - Get comparables selection list partial view
+    [HttpGet]
+    public async Task<IActionResult> GetComparablesSelectionList(int propertyId)
+    {
+        try
+        {
+            var (error, _) = await GetAuthorizedPropertyAsync(propertyId);
+            if (error != null)
+                return BadRequest("Unauthorized or property not found");
+
+            var comparables = await PropertyService.GetComparablesAsync(propertyId);
+
+            return PartialView("_ComparablesSelectionList", comparables);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting comparables selection list for property ID {PropertyId}", propertyId);
+            return StatusCode(500, "Failed to load comparables selection list");
+        }
+    }
+
     // POST: Property/CreateEvaluation - Create a new evaluation with 70% rule calculations
     [HttpPost]
     [ValidateAntiForgeryToken]

@@ -1,0 +1,50 @@
+@model List<DealEvaluator.Application.DTOs.Comparable.ComparableDto>
+
+@if (Model.Any())
+{
+    <div class="card">
+        <div class="card-body p-3" style="max-height: 550px; overflow-y: auto;">
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="selectAllComps" checked>
+                <label class="form-check-label fw-bold" for="selectAllComps">
+                    Select All (@Model.Count)
+                </label>
+            </div>
+            <hr>
+            @foreach (var comp in Model)
+            {
+                <div class="form-check mb-2">
+                    <input class="form-check-input comparable-checkbox"
+                           type="checkbox"
+                           name="ComparableIds"
+                           value="@comp.Id"
+                           id="comp-@comp.Id"
+                           checked>
+                    <label class="form-check-label" for="comp-@comp.Id">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <strong>@comp.Address</strong>
+                                <div class="text-muted small">@comp.City, @comp.State</div>
+                            </div>
+                            @if (comp.Price.HasValue)
+                            {
+                                <span class="badge bg-success ms-2">$@comp.Price.Value.ToString("N0")</span>
+                            }
+                        </div>
+                    </label>
+                </div>
+            }
+        </div>
+    </div>
+    <small class="form-text text-muted">ARV will be calculated as the average price of selected comparables</small>
+}
+else
+{
+    <div class="alert alert-warning">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-triangle me-2" viewBox="0 0 16 16">
+            <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z"/>
+            <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
+        </svg>
+        No comparables found. Please add comparables before creating an evaluation.
+    </div>
+}

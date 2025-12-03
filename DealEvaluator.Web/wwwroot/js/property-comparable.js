@@ -87,6 +87,27 @@ PropertyPage.initializeComparableMap = async function(properties) {
         maxZoom: 19
     }).addTo(PropertyPage.comparableMap);
 
+    // Initialize marker cluster group for property markers
+    PropertyPage.markerClusterGroup = L.markerClusterGroup({
+        maxClusterRadius: 60,
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false,
+        zoomToBoundsOnClick: true,
+        iconCreateFunction: function(cluster) {
+            const count = cluster.getChildCount();
+            let size = 'small';
+            if (count >= 100) size = 'large';
+            else if (count >= 10) size = 'medium';
+
+            return L.divIcon({
+                html: '<div><span>' + count + '</span></div>',
+                className: 'marker-cluster marker-cluster-' + size,
+                iconSize: L.point(40, 40)
+            });
+        }
+    });
+    PropertyPage.comparableMap.addLayer(PropertyPage.markerClusterGroup);
+
     // Add the main property marker (red pin)
     await PropertyPage.addMainPropertyMarkerToComparableMap();
 
@@ -462,18 +483,19 @@ PropertyPage.createCustomMarkerIcon = function(property) {
  * Updates map markers to show only filtered properties
  */
 PropertyPage.updateMapMarkers = function(filteredProperties) {
-    // Remove all existing property markers (but keep main property marker)
-    PropertyPage.propertyMarkers.forEach(marker => {
-        PropertyPage.comparableMap.removeLayer(marker);
-    });
+    // Clear all markers from the cluster group
+    if (PropertyPage.markerClusterGroup) {
+        PropertyPage.markerClusterGroup.clearLayers();
+    }
+
+    // Reset the property markers array
     PropertyPage.propertyMarkers = [];
 
-    // Add markers for filtered properties
+    // Add markers for filtered properties to the cluster group
     filteredProperties.forEach(property => {
         if (property.latitude && property.longitude) {
             const customIcon = PropertyPage.createCustomMarkerIcon(property);
-            const marker = L.marker([property.latitude, property.longitude], { icon: customIcon })
-                .addTo(PropertyPage.comparableMap);
+            const marker = L.marker([property.latitude, property.longitude], { icon: customIcon });
 
             // Format the sold date
             const formattedDate = PropertyPage.formatDate(property.dateSold);
@@ -508,11 +530,14 @@ PropertyPage.updateMapMarkers = function(filteredProperties) {
             `;
 
             marker.bindPopup(popupContent);
+
+            // Add marker to the cluster group instead of directly to the map
+            PropertyPage.markerClusterGroup.addLayer(marker);
             PropertyPage.propertyMarkers.push(marker);
         }
     });
 
-    console.log(`Added ${PropertyPage.propertyMarkers.length} markers to map`);
+    console.log(`Added ${PropertyPage.propertyMarkers.length} markers to cluster group`);
 };
 
 // ============================================================
@@ -569,21 +594,55 @@ PropertyPage.addAsComparable = async function(encodedProperty) {
         const result = await response.json();
 
         if (result.success) {
-            // Close the modal
-            const modalElement = document.getElementById('addComparableModal');
-            if (modalElement) {
-                const modal = bootstrap.Modal.getInstance(modalElement);
-                if (modal) modal.hide();
-            }
+            // Show success notification
+            toastr.success(`Successfully added ${property.address || 'property'} as a comparable!`, 'Comparable Added');
 
-            // Reload the page to show the new comparable
-            location.reload();
+            // Refresh the comparables table on the main page
+            await PropertyPage.refreshComparablesTable();
         } else {
-            alert('Error adding comparable: ' + (result.error || 'Unknown error'));
+            toastr.error(result.error || 'Unknown error', 'Failed to Add Comparable');
         }
     } catch (error) {
         console.error('Error adding comparable:', error);
-        alert('Failed to add comparable. Please try again.');
+        toastr.error('Failed to add comparable. Please try again.', 'Error');
+    }
+};
+
+/**
+ * Refreshes the comparables table by fetching the updated partial view from the server
+ */
+PropertyPage.refreshComparablesTable = async function() {
+    try {
+        console.log('Refreshing comparables table...');
+
+        const response = await fetch(`/Property/GetComparablesTable?propertyId=${PropertyPage.propertyId}`);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const html = await response.text();
+
+        // Update the table container
+        const container = document.querySelector('#comparables-table-container');
+        if (container) {
+            container.innerHTML = html;
+            console.log('Comparables table updated successfully');
+        }
+
+        // Update the count badge by counting rows in the new table
+        const tableRows = document.querySelectorAll('#comparables-table-container tbody tr');
+        const count = tableRows.length;
+
+        const countBadge = document.querySelector('#comparables-count-badge');
+        if (countBadge) {
+            countBadge.textContent = count;
+        }
+
+        console.log(`Comparables table refreshed: ${count} comparables`);
+    } catch (error) {
+        console.error('Error refreshing comparables table:', error);
+        toastr.error('Failed to refresh comparables table', 'Error');
     }
 };
 
