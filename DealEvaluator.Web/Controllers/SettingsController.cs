@@ -39,18 +39,22 @@ public class SettingsController : Controller
 
             // Load deal settings
             var settings = await _dealSettingsService.GetUserSettingsAsync(userId);
+
+            // Convert decimals to percentages for display
             var dealSettingsDto = new UpdateDealSettingsDto
             {
-                SellingAgentCommission = settings.SellingAgentCommission,
-                SellingClosingCosts = settings.SellingClosingCosts,
-                BuyingClosingCosts = settings.BuyingClosingCosts,
-                AnnualPropertyTaxRate = settings.AnnualPropertyTaxRate,
+                SellingAgentCommission = Math.Round(settings.SellingAgentCommission * 100, 1),
+                SellingClosingCosts = Math.Round(settings.SellingClosingCosts * 100, 1),
+                BuyingClosingCosts = Math.Round(settings.BuyingClosingCosts * 100, 1),
+                AnnualPropertyTaxRate = Math.Round(settings.AnnualPropertyTaxRate * 100, 1),
                 MonthlyInsurance = settings.MonthlyInsurance,
                 MonthlyUtilities = settings.MonthlyUtilities,
                 DefaultHoldingMonths = settings.DefaultHoldingMonths,
                 ProfitTargetType = settings.ProfitTargetType,
-                ProfitTargetValue = settings.ProfitTargetValue,
-                ContingencyPercentage = settings.ContingencyPercentage
+                ProfitTargetValue = settings.ProfitTargetType == Domain.Enums.ProfitTargetType.PercentageOfArv
+                    ? Math.Round(settings.ProfitTargetValue * 100, 1)
+                    : settings.ProfitTargetValue,
+                ContingencyPercentage = Math.Round(settings.ContingencyPercentage * 100, 1)
             };
 
             // Load rehab templates
@@ -102,20 +106,22 @@ public class SettingsController : Controller
 
         try
         {
-            // Map DTO to entity for update
+            // Convert percentages back to decimals for storage (divide by 100)
             var settings = new DealSettings
             {
                 UserId = userId,
-                SellingAgentCommission = dto.SellingAgentCommission,
-                SellingClosingCosts = dto.SellingClosingCosts,
-                BuyingClosingCosts = dto.BuyingClosingCosts,
-                AnnualPropertyTaxRate = dto.AnnualPropertyTaxRate,
+                SellingAgentCommission = dto.SellingAgentCommission / 100,
+                SellingClosingCosts = dto.SellingClosingCosts / 100,
+                BuyingClosingCosts = dto.BuyingClosingCosts / 100,
+                AnnualPropertyTaxRate = dto.AnnualPropertyTaxRate / 100,
                 MonthlyInsurance = dto.MonthlyInsurance,
                 MonthlyUtilities = dto.MonthlyUtilities,
                 DefaultHoldingMonths = dto.DefaultHoldingMonths,
                 ProfitTargetType = dto.ProfitTargetType,
-                ProfitTargetValue = dto.ProfitTargetValue,
-                ContingencyPercentage = dto.ContingencyPercentage
+                ProfitTargetValue = dto.ProfitTargetType == Domain.Enums.ProfitTargetType.PercentageOfArv
+                    ? dto.ProfitTargetValue / 100
+                    : dto.ProfitTargetValue,
+                ContingencyPercentage = dto.ContingencyPercentage / 100
             };
 
             await _dealSettingsService.UpdateSettingsAsync(userId, settings);

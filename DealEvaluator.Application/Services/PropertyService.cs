@@ -271,45 +271,45 @@ public class PropertyService : IPropertyService
         };
 
         // Calculate repair cost from rehab estimate (TotalCost is computed property)
-        decimal repairCost = (decimal)Math.Round(rehabEstimate.TotalCost);
+        var repairCost = (double)Math.Round(rehabEstimate.TotalCost);
 
         // Add contingency buffer to rehab costs
-        decimal contingencyBuffer = repairCost * settings.ContingencyPercentage;
-        decimal totalRehabWithContingency = repairCost + contingencyBuffer;
+        var contingencyBuffer = repairCost * settings.ContingencyPercentage;
+        var totalRehabWithContingency = repairCost + contingencyBuffer;
 
         // Calculate desired profit based on user's profit target settings
-        decimal desiredProfit = settings.ProfitTargetType == ProfitTargetType.PercentageOfArv
+        var desiredProfit = settings.ProfitTargetType == ProfitTargetType.PercentageOfArv
             ? arv * settings.ProfitTargetValue
             : settings.ProfitTargetValue;
 
         // Calculate all costs
         // Selling costs (paid when selling the property)
-        decimal sellingCosts = arv * (settings.SellingAgentCommission + settings.SellingClosingCosts);
+        var sellingCosts = arv * (settings.SellingAgentCommission + settings.SellingClosingCosts);
 
         // Holding costs (monthly expenses during rehab period)
-        decimal monthlyPropertyTax = (arv * settings.AnnualPropertyTaxRate) / 12;
-        decimal monthlyHoldingCosts = monthlyPropertyTax + settings.MonthlyInsurance + settings.MonthlyUtilities;
-        decimal totalHoldingCosts = monthlyHoldingCosts * settings.DefaultHoldingMonths;
+        var monthlyPropertyTax = (arv * settings.AnnualPropertyTaxRate) / 12;
+        var monthlyHoldingCosts = monthlyPropertyTax + settings.MonthlyInsurance + settings.MonthlyUtilities;
+        var totalHoldingCosts = monthlyHoldingCosts * settings.DefaultHoldingMonths;
 
         // Calculate max offer using backward-from-ARV approach
         // ARV - SellingCosts - HoldingCosts - Rehab - Contingency - BuyingCosts - Profit = MaxOffer
         // But BuyingCosts = MaxOffer × BuyingClosingCosts, so we need to solve algebraically:
         // MaxOffer = (ARV - SellingCosts - HoldingCosts - Rehab - Contingency - Profit) / (1 + BuyingClosingCosts)
-        decimal maxOfferNumerator = arv - sellingCosts - totalHoldingCosts - totalRehabWithContingency - desiredProfit;
-        decimal maxOffer = maxOfferNumerator / (1 + settings.BuyingClosingCosts);
+        var maxOfferNumerator = arv - sellingCosts - totalHoldingCosts - totalRehabWithContingency - desiredProfit;
+        var maxOffer = maxOfferNumerator / (1 + settings.BuyingClosingCosts);
 
         // Now calculate actual buying costs with the computed max offer
-        decimal buyingCosts = maxOffer * settings.BuyingClosingCosts;
+        var buyingCosts = maxOffer * settings.BuyingClosingCosts;
 
         // Total investment (all money you put in)
-        decimal totalInvestment = maxOffer + buyingCosts + totalRehabWithContingency + totalHoldingCosts;
+        var totalInvestment = maxOffer + buyingCosts + totalRehabWithContingency + totalHoldingCosts;
 
         // Net proceeds from sale (what you get after selling)
-        decimal netProceeds = arv - sellingCosts;
+        var netProceeds = arv - sellingCosts;
 
         // Actual profit and ROI
-        decimal actualProfit = netProceeds - totalInvestment;
-        decimal? roi = totalInvestment > 0 ? (netProceeds - totalInvestment) / totalInvestment * 100 : null;
+        var actualProfit = netProceeds - totalInvestment;
+        double? roi = totalInvestment > 0 ? (netProceeds - totalInvestment) / totalInvestment * 100 : null;
 
         // Create evaluation entity
         var evaluation = new Evaluation
@@ -318,7 +318,7 @@ public class PropertyService : IPropertyService
             Arv = arv,
             MaxOffer = (int)Math.Round(maxOffer),
             Profit = (int)Math.Round(actualProfit),
-            Roi = roi,
+            Roi = (decimal?)roi,
             CreatedAt = DateTime.UtcNow,
             Comparables = comparables,
             RehabEstimate = rehabEstimate

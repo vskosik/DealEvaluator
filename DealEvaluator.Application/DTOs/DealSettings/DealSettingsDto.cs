@@ -8,22 +8,22 @@ public class DealSettingsDto
     public string UserId { get; set; } = string.Empty;
 
     // Selling Costs (applied to ARV)
-    public decimal SellingAgentCommission { get; set; }
-    public decimal SellingClosingCosts { get; set; }
+    public double SellingAgentCommission { get; set; }
+    public double SellingClosingCosts { get; set; }
 
     // Buying Costs (applied to purchase price)
-    public decimal BuyingClosingCosts { get; set; }
+    public double BuyingClosingCosts { get; set; }
 
     // Holding Costs
-    public decimal AnnualPropertyTaxRate { get; set; }
-    public decimal MonthlyInsurance { get; set; }
-    public decimal MonthlyUtilities { get; set; }
+    public double AnnualPropertyTaxRate { get; set; }
+    public int MonthlyInsurance { get; set; }
+    public int MonthlyUtilities { get; set; }
     public int DefaultHoldingMonths { get; set; }
 
     // Profit & Risk Settings
     public ProfitTargetType ProfitTargetType { get; set; }
-    public decimal ProfitTargetValue { get; set; }
-    public decimal ContingencyPercentage { get; set; }
+    public double ProfitTargetValue { get; set; }
+    public double ContingencyPercentage { get; set; }
 
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }

@@ -99,18 +99,7 @@ public class DealSettingsService : IDealSettingsService
     {
         return new DealSettings
         {
-            UserId = userId,
-            SellingAgentCommission = 0.06m,      // 6%
-            SellingClosingCosts = 0.02m,         // 2%
-            BuyingClosingCosts = 0.02m,          // 2%
-            AnnualPropertyTaxRate = 0.012m,      // 1.2%
-            MonthlyInsurance = 150m,             // $150/month
-            MonthlyUtilities = 200m,             // $200/month
-            DefaultHoldingMonths = 4,            // 4 months
-            ProfitTargetType = ProfitTargetType.PercentageOfArv,
-            ProfitTargetValue = 0.15m,           // 15% of ARV
-            ContingencyPercentage = 0.10m,       // 10% of rehab costs
-            CreatedAt = DateTime.UtcNow
+            UserId = userId
         };
     }
 }

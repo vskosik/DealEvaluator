@@ -66,7 +66,7 @@
             if (profitTypeSelect.value === '0') {
                 // Percentage of ARV
                 profitUnit.textContent = '%';
-                profitHelp.textContent = 'E.g., 0.15 for 15% of ARV';
+                profitHelp.textContent = 'E.g., 15 for 15% of ARV';
             } else {
                 // Fixed Dollar Amount
                 profitUnit.textContent = '$';
@@ -76,25 +76,6 @@
 
         profitTypeSelect.addEventListener('change', updateProfitDisplay);
         updateProfitDisplay(); // Initialize on page load
-
-        // Convert percentages to decimal format helper
-        function convertPercentToDecimal(inputId) {
-            const input = document.getElementById(inputId);
-            input.addEventListener('blur', function() {
-                const value = parseFloat(this.value);
-                if (!isNaN(value) && value > 1) {
-                    // User entered percentage (e.g., 6 instead of 0.06)
-                    this.value = (value / 100).toFixed(4);
-                }
-            });
-        }
-
-        // Apply to percentage fields
-        convertPercentToDecimal('SellingAgentCommission');
-        convertPercentToDecimal('SellingClosingCosts');
-        convertPercentToDecimal('BuyingClosingCosts');
-        convertPercentToDecimal('AnnualPropertyTaxRate');
-        convertPercentToDecimal('ContingencyPercentage');
 
         // Form validation
         const settingsForm = document.getElementById('settingsForm');
