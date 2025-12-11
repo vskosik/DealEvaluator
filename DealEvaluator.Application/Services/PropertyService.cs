@@ -12,20 +12,11 @@ namespace DealEvaluator.Application.Services;
 
 public class PropertyService : IPropertyService
 {
-    // Cost constants for realistic profit calculation
-    // These can be made configurable in future features
-    private const decimal SellingAgentCommission = 0.06m;    // 6% of ARV
-    private const decimal SellingClosingCosts = 0.02m;       // 2% of ARV
-    private const decimal BuyingClosingCosts = 0.02m;        // 2% of purchase price
-    private const decimal AnnualPropertyTaxRate = 0.012m;    // 1.2% annually
-    private const decimal MonthlyInsurance = 150m;           // Monthly insurance cost
-    private const decimal MonthlyUtilities = 200m;           // Monthly utilities cost
-    private const int DefaultHoldingMonths = 4;              // Average rehab holding period
-
     private readonly IPropertyRepository _propertyRepository;
     private readonly IEvaluationRepository _evaluationRepository;
     private readonly ICompService _compService;
     private readonly IRehabCostTemplateRepository _rehabTemplateRepository;
+    private readonly IDealSettingsService _dealSettingsService;
     private readonly IMapper _mapper;
     private readonly IHttpClientFactory _httpClientFactory;
 
@@ -34,6 +25,7 @@ public class PropertyService : IPropertyService
         IEvaluationRepository evaluationRepository,
         ICompService compService,
         IRehabCostTemplateRepository rehabTemplateRepository,
+        IDealSettingsService dealSettingsService,
         IMapper mapper,
         IHttpClientFactory httpClientFactory)
     {
@@ -41,6 +33,7 @@ public class PropertyService : IPropertyService
         _evaluationRepository = evaluationRepository;
         _compService = compService;
         _rehabTemplateRepository = rehabTemplateRepository;
+        _dealSettingsService = dealSettingsService;
         _mapper = mapper;
         _httpClientFactory = httpClientFactory;
     }
@@ -148,7 +141,7 @@ public class PropertyService : IPropertyService
                 RehabLineItems = rehabLineItemDtos
             };
 
-            await CreateEvaluationAsync(createEvaluationDto);
+            await CreateEvaluationAsync(createEvaluationDto, userId);
         }
         catch (InvalidOperationException)
         {
@@ -230,12 +223,15 @@ public class PropertyService : IPropertyService
         return _mapper.Map<ComparableDto>(createdComparable);
     }
 
-    public async Task<EvaluationDto> CreateEvaluationAsync(CreateEvaluationDto dto)
+    public async Task<EvaluationDto> CreateEvaluationAsync(CreateEvaluationDto dto, string userId)
     {
         // Validate property exists
         var property = await _propertyRepository.GetByIdAsync(dto.PropertyId);
         if (property == null)
             throw new KeyNotFoundException($"Property with ID {dto.PropertyId} not found");
+
+        // Get user's deal settings
+        var settings = await _dealSettingsService.GetUserSettingsAsync(userId);
 
         // Fetch comparables by IDs
         var comparables = new List<Comparable>();
@@ -275,31 +271,44 @@ public class PropertyService : IPropertyService
         };
 
         // Calculate repair cost from rehab estimate (TotalCost is computed property)
-        int repairCost = (int)Math.Round(rehabEstimate.TotalCost);
+        decimal repairCost = (decimal)Math.Round(rehabEstimate.TotalCost);
 
-        // Calculate 70% Rule max offer (traditional formula)
-        int maxOffer = (int)(arv * 0.7m) - repairCost;
+        // Add contingency buffer to rehab costs
+        decimal contingencyBuffer = repairCost * settings.ContingencyPercentage;
+        decimal totalRehabWithContingency = repairCost + contingencyBuffer;
 
-        // Calculate realistic profit with all costs included
+        // Calculate desired profit based on user's profit target settings
+        decimal desiredProfit = settings.ProfitTargetType == ProfitTargetType.PercentageOfArv
+            ? arv * settings.ProfitTargetValue
+            : settings.ProfitTargetValue;
+
+        // Calculate all costs
         // Selling costs (paid when selling the property)
-        decimal sellingCosts = arv * (SellingAgentCommission + SellingClosingCosts);
-
-        // Buying costs (paid when purchasing)
-        decimal buyingCosts = maxOffer * BuyingClosingCosts;
+        decimal sellingCosts = arv * (settings.SellingAgentCommission + settings.SellingClosingCosts);
 
         // Holding costs (monthly expenses during rehab period)
-        decimal monthlyPropertyTax = (arv * AnnualPropertyTaxRate) / 12;
-        decimal monthlyHoldingCosts = monthlyPropertyTax + MonthlyInsurance + MonthlyUtilities;
-        decimal totalHoldingCosts = monthlyHoldingCosts * DefaultHoldingMonths;
+        decimal monthlyPropertyTax = (arv * settings.AnnualPropertyTaxRate) / 12;
+        decimal monthlyHoldingCosts = monthlyPropertyTax + settings.MonthlyInsurance + settings.MonthlyUtilities;
+        decimal totalHoldingCosts = monthlyHoldingCosts * settings.DefaultHoldingMonths;
+
+        // Calculate max offer using backward-from-ARV approach
+        // ARV - SellingCosts - HoldingCosts - Rehab - Contingency - BuyingCosts - Profit = MaxOffer
+        // But BuyingCosts = MaxOffer × BuyingClosingCosts, so we need to solve algebraically:
+        // MaxOffer = (ARV - SellingCosts - HoldingCosts - Rehab - Contingency - Profit) / (1 + BuyingClosingCosts)
+        decimal maxOfferNumerator = arv - sellingCosts - totalHoldingCosts - totalRehabWithContingency - desiredProfit;
+        decimal maxOffer = maxOfferNumerator / (1 + settings.BuyingClosingCosts);
+
+        // Now calculate actual buying costs with the computed max offer
+        decimal buyingCosts = maxOffer * settings.BuyingClosingCosts;
 
         // Total investment (all money you put in)
-        decimal totalInvestment = maxOffer + buyingCosts + repairCost + totalHoldingCosts;
+        decimal totalInvestment = maxOffer + buyingCosts + totalRehabWithContingency + totalHoldingCosts;
 
         // Net proceeds from sale (what you get after selling)
         decimal netProceeds = arv - sellingCosts;
 
-        // Real profit and ROI
-        int profit = (int)Math.Round(netProceeds - totalInvestment);
+        // Actual profit and ROI
+        decimal actualProfit = netProceeds - totalInvestment;
         decimal? roi = totalInvestment > 0 ? (netProceeds - totalInvestment) / totalInvestment * 100 : null;
 
         // Create evaluation entity
@@ -307,8 +316,8 @@ public class PropertyService : IPropertyService
         {
             PropertyId = dto.PropertyId,
             Arv = arv,
-            MaxOffer = maxOffer,
-            Profit = profit,
+            MaxOffer = (int)Math.Round(maxOffer),
+            Profit = (int)Math.Round(actualProfit),
             Roi = roi,
             CreatedAt = DateTime.UtcNow,
             Comparables = comparables,

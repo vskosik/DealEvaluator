@@ -16,6 +16,7 @@ public class DealEvaluatorContext : IdentityDbContext<User>
     public DbSet<RehabEstimate> RehabEstimates { get; set; }
     public DbSet<RehabLineItem> RehabLineItems { get; set; }
     public DbSet<RehabCostTemplate> RehabCostTemplates { get; set; }
+    public DbSet<DealSettings> DealSettings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -29,5 +30,6 @@ public class DealEvaluatorContext : IdentityDbContext<User>
         builder.ApplyConfiguration(new RehabEstimateConfiguration());
         builder.ApplyConfiguration(new RehabLineItemConfiguration());
         builder.ApplyConfiguration(new RehabCostTemplateConfiguration());
+        builder.ApplyConfiguration(new DealSettingsConfiguration());
     }
 }

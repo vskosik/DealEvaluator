@@ -21,6 +21,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IEvaluationRepository, EvaluationRepository>();
         services.AddScoped<IMarketDataRepository, MarketDataRepository>();
         services.AddScoped<IRehabCostTemplateRepository, RehabCostTemplateRepository>();
+        services.AddScoped<IDealSettingsRepository, DealSettingsRepository>();
 
         return services;
     }

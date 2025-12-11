@@ -341,7 +341,7 @@ public class PropertyController : BaseAuthorizedController
         }
     }
 
-    // POST: Property/CreateEvaluation - Create a new evaluation with 70% rule calculations
+    // POST: Property/CreateEvaluation - Create a new evaluation using user's custom settings
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateEvaluation(CreateEvaluationDto dto)
@@ -351,8 +351,10 @@ public class PropertyController : BaseAuthorizedController
             var (error, _) = await GetAuthorizedPropertyAsync(dto.PropertyId);
             if (error != null) return error;
 
-            // Create evaluation
-            var evaluation = await PropertyService.CreateEvaluationAsync(dto);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // Create evaluation using user's custom deal settings
+            var evaluation = await PropertyService.CreateEvaluationAsync(dto, userId);
 
             TempData["NotificationType"] = "success";
             TempData["Notification"] = $"Evaluation created! Max Offer: ${evaluation.MaxOffer:N0}, Potential Profit: ${evaluation.Profit:N0}";

@@ -73,11 +73,12 @@ public interface IPropertyService
     Task<ComparableDto> CreateComparableFromMarketDataAsync(CreateComparableDto dto);
 
     /// <summary>
-    /// Creates a new evaluation for a property using the 70% rule
+    /// Creates a new evaluation for a property using user's custom settings
     /// </summary>
     /// <param name="dto">Evaluation input data including repair cost and comparable IDs</param>
+    /// <param name="userId">ID of the user creating the evaluation (for settings lookup)</param>
     /// <returns>Created evaluation with calculated metrics</returns>
-    Task<EvaluationDto> CreateEvaluationAsync(CreateEvaluationDto dto);
+    Task<EvaluationDto> CreateEvaluationAsync(CreateEvaluationDto dto, string userId);
 
     /// <summary>
     /// Gets auto-generated rehab line items based on property details
