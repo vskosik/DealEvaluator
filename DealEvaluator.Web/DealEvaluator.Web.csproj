@@ -39,4 +39,8 @@
       <ProjectReference Include="..\DealEvaluator.Infrastructure\DealEvaluator.Infrastructure.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Views\RehabTemplate\Index.cshtml" />
+    </ItemGroup>
+
 </Project>

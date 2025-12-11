@@ -2,6 +2,7 @@ using System.Security.Claims;
 using DealEvaluator.Application.DTOs.DealSettings;
 using DealEvaluator.Application.Interfaces;
 using DealEvaluator.Domain.Entities;
+using DealEvaluator.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,17 +12,20 @@ namespace DealEvaluator.Web.Controllers;
 public class SettingsController : Controller
 {
     private readonly IDealSettingsService _dealSettingsService;
+    private readonly IRehabCostTemplateService _rehabTemplateService;
     private readonly ILogger<SettingsController> _logger;
 
     public SettingsController(
         IDealSettingsService dealSettingsService,
+        IRehabCostTemplateService rehabTemplateService,
         ILogger<SettingsController> logger)
     {
         _dealSettingsService = dealSettingsService;
+        _rehabTemplateService = rehabTemplateService;
         _logger = logger;
     }
 
-    // GET: Settings/Index - Display and edit user's deal settings
+    // GET: Settings/Index - Display unified settings page with deal settings and rehab templates
     [HttpGet]
     public async Task<IActionResult> Index()
     {
@@ -33,10 +37,9 @@ public class SettingsController : Controller
                 return Unauthorized();
             }
 
+            // Load deal settings
             var settings = await _dealSettingsService.GetUserSettingsAsync(userId);
-
-            // Map to DTO for display
-            var dto = new UpdateDealSettingsDto
+            var dealSettingsDto = new UpdateDealSettingsDto
             {
                 SellingAgentCommission = settings.SellingAgentCommission,
                 SellingClosingCosts = settings.SellingClosingCosts,
@@ -50,14 +53,24 @@ public class SettingsController : Controller
                 ContingencyPercentage = settings.ContingencyPercentage
             };
 
-            return View(dto);
+            // Load rehab templates
+            var rehabTemplates = await _rehabTemplateService.GetUserTemplatesAsync(userId);
+
+            // Create unified view model
+            var viewModel = new SettingsViewModel
+            {
+                DealSettings = dealSettingsDto,
+                RehabTemplates = rehabTemplates.ToList()
+            };
+
+            return View(viewModel);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading deal settings");
+            _logger.LogError(ex, "Error loading settings");
             TempData["NotificationType"] = "error";
             TempData["Notification"] = "Error loading your settings.";
-            return View(new UpdateDealSettingsDto());
+            return View(new SettingsViewModel());
         }
     }
 
@@ -66,21 +79,29 @@ public class SettingsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Index(UpdateDealSettingsDto dto)
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized();
+        }
+
         if (!ModelState.IsValid)
         {
             TempData["NotificationType"] = "error";
             TempData["Notification"] = "Please correct the errors in the form.";
-            return View(dto);
+
+            // Reload rehab templates to return full view model
+            var rehabTemplates = await _rehabTemplateService.GetUserTemplatesAsync(userId);
+            var viewModel = new SettingsViewModel
+            {
+                DealSettings = dto,
+                RehabTemplates = rehabTemplates.ToList()
+            };
+            return View(viewModel);
         }
 
         try
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized();
-            }
-
             // Map DTO to entity for update
             var settings = new DealSettings
             {
@@ -109,7 +130,15 @@ public class SettingsController : Controller
             _logger.LogError(ex, "Error updating deal settings");
             TempData["NotificationType"] = "error";
             TempData["Notification"] = "An error occurred while saving your settings.";
-            return View(dto);
+
+            // Reload rehab templates to return full view model
+            var rehabTemplates = await _rehabTemplateService.GetUserTemplatesAsync(userId);
+            var viewModel = new SettingsViewModel
+            {
+                DealSettings = dto,
+                RehabTemplates = rehabTemplates.ToList()
+            };
+            return View(viewModel);
         }
     }
 

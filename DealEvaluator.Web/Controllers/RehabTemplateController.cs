@@ -20,26 +20,6 @@ public class RehabTemplateController : Controller
         _templateService = templateService;
     }
 
-    // GET: RehabTemplate/Index - List all user's cost templates
-    [HttpGet]
-    public async Task<IActionResult> Index()
-    {
-        try
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var templates = await _templateService.GetUserTemplatesAsync(userId);
-
-            return View(templates);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error loading rehab cost templates");
-            TempData["NotificationType"] = "error";
-            TempData["Notification"] = "Error loading your cost templates.";
-            return View(new List<DealEvaluator.Application.DTOs.Rehab.RehabCostTemplateDto>());
-        }
-    }
-
     // POST: RehabTemplate/Upsert - Create or update a cost template
     [HttpPost]
     [ValidateAntiForgeryToken]
