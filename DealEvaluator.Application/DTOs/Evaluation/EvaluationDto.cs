@@ -18,6 +18,20 @@ public class EvaluationDto
     public int? Profit { get; set; }
     public decimal? Roi { get; set; }
 
+    // Selling Costs
+    public int? AgentCommission { get; set; }
+    public int? SellingClosingCosts { get; set; }
+
+    // Buying Costs
+    public int? BuyingClosingCosts { get; set; }
+
+    // Holding Costs
+    public int? PropertyTaxesCost { get; set; }
+    public int? InsuranceCost { get; set; }
+    public int? UtilitiesCost { get; set; }
+
+    public int? ContingencyBuffer { get; set; }
+    
     public DateTime CreatedAt { get; set; }
 
     public List<ComparableDto> Comparables { get; set; } = new();

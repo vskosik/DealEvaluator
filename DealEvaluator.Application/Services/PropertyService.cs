@@ -283,28 +283,27 @@ public class PropertyService : IPropertyService
             : settings.ProfitTargetValue;
 
         // Calculate all costs
-        // Selling costs (paid when selling the property)
-        var sellingCosts = arv * (settings.SellingAgentCommission + settings.SellingClosingCosts);
+        // Selling costs
+        var agentCommission = arv * settings.SellingAgentCommission;
+        var sellingClosingCosts = arv * settings.SellingClosingCosts;
+        var sellingCosts = agentCommission + sellingClosingCosts;
 
-        // Holding costs (monthly expenses during rehab period)
+        // Holding costs
         var monthlyPropertyTax = (arv * settings.AnnualPropertyTaxRate) / 12;
-        var monthlyHoldingCosts = monthlyPropertyTax + settings.MonthlyInsurance + settings.MonthlyUtilities;
-        var totalHoldingCosts = monthlyHoldingCosts * settings.DefaultHoldingMonths;
+        var propertyTaxesCost = monthlyPropertyTax * settings.DefaultHoldingMonths;
+        var insuranceCost = settings.MonthlyInsurance * settings.DefaultHoldingMonths;
+        var utilitiesCost = settings.MonthlyUtilities * settings.DefaultHoldingMonths;
+        var totalHoldingCosts = propertyTaxesCost + insuranceCost + utilitiesCost;
 
-        // Calculate max offer using backward-from-ARV approach
-        // ARV - SellingCosts - HoldingCosts - Rehab - Contingency - BuyingCosts - Profit = MaxOffer
-        // But BuyingCosts = MaxOffer × BuyingClosingCosts, so we need to solve algebraically:
-        // MaxOffer = (ARV - SellingCosts - HoldingCosts - Rehab - Contingency - Profit) / (1 + BuyingClosingCosts)
         var maxOfferNumerator = arv - sellingCosts - totalHoldingCosts - totalRehabWithContingency - desiredProfit;
         var maxOffer = maxOfferNumerator / (1 + settings.BuyingClosingCosts);
 
-        // Now calculate actual buying costs with the computed max offer
-        var buyingCosts = maxOffer * settings.BuyingClosingCosts;
+        var buyingClosingCosts = maxOffer * settings.BuyingClosingCosts;
 
-        // Total investment (all money you put in)
-        var totalInvestment = maxOffer + buyingCosts + totalRehabWithContingency + totalHoldingCosts;
+        // Total investment
+        var totalInvestment = maxOffer + buyingClosingCosts + totalRehabWithContingency + totalHoldingCosts;
 
-        // Net proceeds from sale (what you get after selling)
+        // Net proceeds from sale
         var netProceeds = arv - sellingCosts;
 
         // Actual profit and ROI
@@ -319,6 +318,13 @@ public class PropertyService : IPropertyService
             MaxOffer = (int)Math.Round(maxOffer),
             Profit = (int)Math.Round(actualProfit),
             Roi = (decimal?)roi,
+            AgentCommission = (int)Math.Round(agentCommission),
+            SellingClosingCosts = (int)Math.Round(sellingClosingCosts),
+            BuyingClosingCosts = (int)Math.Round(buyingClosingCosts),
+            PropertyTaxesCost = (int)Math.Round(propertyTaxesCost),
+            InsuranceCost = insuranceCost,
+            UtilitiesCost = utilitiesCost,
+            ContingencyBuffer = (int)Math.Round(contingencyBuffer),
             CreatedAt = DateTime.UtcNow,
             Comparables = comparables,
             RehabEstimate = rehabEstimate

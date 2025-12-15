@@ -11,10 +11,24 @@ public class Evaluation
     public decimal? CapRate { get; set; }
     public decimal? CashOnCash { get; set; }
 
-    // Fix & Flip Calculations (70% Rule)
+    // Fix & Flip Calculations
     public int? MaxOffer { get; set; }
     public int? Profit { get; set; }
     public decimal? Roi { get; set; }
+    
+    // Selling Costs
+    public int? AgentCommission { get; set; }
+    public int? SellingClosingCosts { get; set; }
+
+    // Buying Costs
+    public int? BuyingClosingCosts { get; set; }
+
+    // Holding Costs
+    public int? PropertyTaxesCost { get; set; }
+    public int? InsuranceCost { get; set; }
+    public int? UtilitiesCost { get; set; }
+
+    public int? ContingencyBuffer { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

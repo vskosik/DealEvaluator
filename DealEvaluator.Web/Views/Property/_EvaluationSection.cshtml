@@ -160,13 +160,151 @@
                         }
                     </div>
 
-                    <div class="alert alert-info mt-4 mb-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle me-2" viewBox="0 0 16 16">
-                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
-                            <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533z"/>
-                            <path d="M9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
-                        </svg>
-                        <strong>70% Rule:</strong> Max Offer = (ARV × 70%) - Repair Cost. This ensures a 30% margin for profit and holding costs.
+                    <!-- Cost Breakdown Section -->
+                    <div class="mt-4">
+                        <button class="btn btn-outline-primary w-100" type="button" data-bs-toggle="collapse" data-bs-target="#costBreakdown" aria-expanded="false" aria-controls="costBreakdown">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calculator me-2" viewBox="0 0 16 16">
+                                <path d="M12 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
+                                <path d="M4 2.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5zm0 4a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z"/>
+                            </svg>
+                            View Cost Breakdown
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-chevron-down ms-2" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"/>
+                            </svg>
+                        </button>
+
+                        <div class="collapse mt-3" id="costBreakdown">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="fw-bold mb-3">How We Calculated Your Max Offer</h6>
+                                    <div class="calculation-flow">
+                                        <!-- ARV Starting Point -->
+                                        <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                                            <div>
+                                                <strong>After Repair Value (ARV)</strong>
+                                                <small class="text-muted d-block">Based on @(Model.LatestEvaluation.Comparables?.Count ?? 0) comparables</small>
+                                            </div>
+                                            @if (Model.LatestEvaluation.Arv.HasValue)
+                                            {
+                                                <span class="fs-5 fw-bold text-success">$@Model.LatestEvaluation.Arv.Value.ToString("N0")</span>
+                                            }
+                                        </div>
+
+                                        <!-- Selling Costs -->
+                                        @if (Model.LatestEvaluation.AgentCommission.HasValue || Model.LatestEvaluation.SellingClosingCosts.HasValue)
+                                        {
+                                            <div class="ms-3 mb-2">
+                                                <div class="text-muted small mb-1"><strong>− Selling Costs</strong></div>
+                                                @if (Model.LatestEvaluation.AgentCommission.HasValue)
+                                                {
+                                                    <div class="d-flex justify-content-between align-items-center ms-3">
+                                                        <span class="small">Agent Commission</span>
+                                                        <span class="text-danger">−$@Model.LatestEvaluation.AgentCommission.Value.ToString("N0")</span>
+                                                    </div>
+                                                }
+                                                @if (Model.LatestEvaluation.SellingClosingCosts.HasValue)
+                                                {
+                                                    <div class="d-flex justify-content-between align-items-center ms-3">
+                                                        <span class="small">Selling Closing Costs</span>
+                                                        <span class="text-danger">−$@Model.LatestEvaluation.SellingClosingCosts.Value.ToString("N0")</span>
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+
+                                        <!-- Holding Costs -->
+                                        @if (Model.LatestEvaluation.PropertyTaxesCost.HasValue || Model.LatestEvaluation.InsuranceCost.HasValue || Model.LatestEvaluation.UtilitiesCost.HasValue)
+                                        {
+                                            <div class="ms-3 mb-2">
+                                                <div class="text-muted small mb-1"><strong>− Holding Costs</strong></div>
+                                                @if (Model.LatestEvaluation.PropertyTaxesCost.HasValue)
+                                                {
+                                                    <div class="d-flex justify-content-between align-items-center ms-3">
+                                                        <span class="small">Property Taxes</span>
+                                                        <span class="text-danger">−$@Model.LatestEvaluation.PropertyTaxesCost.Value.ToString("N0")</span>
+                                                    </div>
+                                                }
+                                                @if (Model.LatestEvaluation.InsuranceCost.HasValue)
+                                                {
+                                                    <div class="d-flex justify-content-between align-items-center ms-3">
+                                                        <span class="small">Insurance</span>
+                                                        <span class="text-danger">−$@Model.LatestEvaluation.InsuranceCost.Value.ToString("N0")</span>
+                                                    </div>
+                                                }
+                                                @if (Model.LatestEvaluation.UtilitiesCost.HasValue)
+                                                {
+                                                    <div class="d-flex justify-content-between align-items-center ms-3">
+                                                        <span class="small">Utilities</span>
+                                                        <span class="text-danger">−$@Model.LatestEvaluation.UtilitiesCost.Value.ToString("N0")</span>
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+
+                                        <!-- Rehab Costs -->
+                                        @if (Model.LatestEvaluation.RepairCost.HasValue)
+                                        {
+                                            <div class="ms-3 mb-2">
+                                                <div class="text-muted small mb-1"><strong>− Rehab Costs</strong></div>
+                                                <div class="d-flex justify-content-between align-items-center ms-3">
+                                                    <span class="small">Base Rehab Cost</span>
+                                                    <span class="text-danger">−$@Model.LatestEvaluation.RepairCost.Value.ToString("N0")</span>
+                                                </div>
+                                                @if (Model.LatestEvaluation.ContingencyBuffer.HasValue)
+                                                {
+                                                    <div class="d-flex justify-content-between align-items-center ms-3">
+                                                        <span class="small">Contingency Buffer</span>
+                                                        <span class="text-danger">−$@Model.LatestEvaluation.ContingencyBuffer.Value.ToString("N0")</span>
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+
+                                        <!-- Buying Costs -->
+                                        @if (Model.LatestEvaluation.BuyingClosingCosts.HasValue)
+                                        {
+                                            <div class="ms-3 mb-2">
+                                                <div class="d-flex justify-content-between align-items-center ms-3">
+                                                    <span class="small"><strong>− Buying Closing Costs</strong></span>
+                                                    <span class="text-danger">−$@Model.LatestEvaluation.BuyingClosingCosts.Value.ToString("N0")</span>
+                                                </div>
+                                            </div>
+                                        }
+
+                                        <!-- Profit Target -->
+                                        @if (Model.LatestEvaluation.Profit.HasValue)
+                                        {
+                                            <div class="ms-3 mb-2">
+                                                <div class="d-flex justify-content-between align-items-center ms-3">
+                                                    <span class="small"><strong>− Desired Profit</strong></span>
+                                                    <span class="text-danger">−$@Model.LatestEvaluation.Profit.Value.ToString("N0")</span>
+                                                </div>
+                                            </div>
+                                        }
+
+                                        <!-- Max Offer Result -->
+                                        @if (Model.LatestEvaluation.MaxOffer.HasValue)
+                                        {
+                                            <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                                                <div>
+                                                    <strong class="fs-5">Maximum Offer</strong>
+                                                    <small class="text-muted d-block">Your purchase price ceiling</small>
+                                                </div>
+                                                <span class="fs-4 fw-bold text-primary">$@Model.LatestEvaluation.MaxOffer.Value.ToString("N0")</span>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <div class="alert alert-info mt-3 mb-0">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-info-circle me-1" viewBox="0 0 16 16">
+                                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                                            <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                                        </svg>
+                                        <small>These cost estimates are based on your custom deal settings. You can adjust them in the Settings page.</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
