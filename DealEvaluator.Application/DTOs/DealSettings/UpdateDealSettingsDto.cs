@@ -35,6 +35,14 @@ public class UpdateDealSettingsDto
     [Required]
     [Range(1, 48, ErrorMessage = "Holding period must be between 1 and 48 months")]
     public int DefaultHoldingMonths { get; set; }
+    
+    [Required]
+    [Range(0, 100, ErrorMessage = "Down payment must be between 0 and 100%")]
+    public double DownPaymentPercentage { get; set; }
+    
+    [Required]
+    [Range(0, 100, ErrorMessage = "Loan rate must be between 0 and 100%")]
+    public double DefaultLoanRate { get; set; }
 
 
     [Required]

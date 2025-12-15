@@ -118,7 +118,7 @@
                                         </svg>
                                     </div>
                                     <div>
-                                        <div class="text-muted small">Max Offer (70% Rule)</div>
+                                        <div class="text-muted small">Max Offer</div>
                                         <div class="fs-4 fw-bold">$@Model.LatestEvaluation.MaxOffer.Value.ToString("N0")</div>
                                     </div>
                                 </div>
@@ -255,6 +255,42 @@
                                                     <div class="d-flex justify-content-between align-items-center ms-3">
                                                         <span class="small">Contingency Buffer</span>
                                                         <span class="text-danger">−$@Model.LatestEvaluation.ContingencyBuffer.Value.ToString("N0")</span>
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+
+                                        <!-- Financing Costs -->
+                                        @if (Model.LatestEvaluation.TotalFinancingCosts.HasValue && Model.LatestEvaluation.TotalFinancingCosts.Value > 0)
+                                        {
+                                            <div class="ms-3 mb-2">
+                                                <div class="text-muted small mb-1"><strong>− Financing Costs</strong></div>
+                                                @if (Model.LatestEvaluation.DownPayment.HasValue)
+                                                {
+                                                    <div class="d-flex justify-content-between align-items-center ms-3">
+                                                        <span class="small">Down Payment</span>
+                                                        <span class="text-info">$@Model.LatestEvaluation.DownPayment.Value.ToString("N0")</span>
+                                                    </div>
+                                                }
+                                                @if (Model.LatestEvaluation.LoanAmount.HasValue)
+                                                {
+                                                    <div class="d-flex justify-content-between align-items-center ms-3">
+                                                        <span class="small">Loan Amount</span>
+                                                        <span class="text-info">$@Model.LatestEvaluation.LoanAmount.Value.ToString("N0")</span>
+                                                    </div>
+                                                }
+                                                @if (Model.LatestEvaluation.MonthlyPayment.HasValue)
+                                                {
+                                                    <div class="d-flex justify-content-between align-items-center ms-3">
+                                                        <span class="small">Monthly Payment</span>
+                                                        <span class="text-info">$@Model.LatestEvaluation.MonthlyPayment.Value.ToString("N0")</span>
+                                                    </div>
+                                                }
+                                                @if (Model.LatestEvaluation.TotalInterest.HasValue)
+                                                {
+                                                    <div class="d-flex justify-content-between align-items-center ms-3">
+                                                        <span class="small">Total Interest</span>
+                                                        <span class="text-danger">−$@Model.LatestEvaluation.TotalInterest.Value.ToString("N0")</span>
                                                     </div>
                                                 }
                                             </div>

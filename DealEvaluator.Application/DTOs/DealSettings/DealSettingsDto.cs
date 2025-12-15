@@ -19,6 +19,8 @@ public class DealSettingsDto
     public int MonthlyInsurance { get; set; }
     public int MonthlyUtilities { get; set; }
     public int DefaultHoldingMonths { get; set; }
+    public double DownPaymentPercentage { get; set; }
+    public double DefaultLoanRate { get; set; }
 
     // Profit & Risk Settings
     public ProfitTargetType ProfitTargetType { get; set; }

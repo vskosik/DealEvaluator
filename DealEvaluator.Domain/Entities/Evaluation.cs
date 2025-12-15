@@ -28,6 +28,13 @@ public class Evaluation
     public int? InsuranceCost { get; set; }
     public int? UtilitiesCost { get; set; }
 
+    // Financing Costs
+    public int? DownPayment { get; set; }
+    public int? LoanAmount { get; set; }
+    public int? MonthlyPayment { get; set; }
+    public int? TotalInterest { get; set; }
+    public int? TotalFinancingCosts { get; set; }
+
     public int? ContingencyBuffer { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

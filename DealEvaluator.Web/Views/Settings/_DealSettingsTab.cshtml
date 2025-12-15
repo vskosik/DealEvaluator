@@ -114,6 +114,39 @@
 
     <hr class="my-4">
 
+    <!-- Financing Costs Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h5 class="text-muted mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-bank me-2" viewBox="0 0 16 16" style="vertical-align: text-bottom;">
+                    <path d="m8 0 6.61 3h.89a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H15v7a.5.5 0 0 1 .485.379l.5 2A.5.5 0 0 1 15.5 16H.5a.5.5 0 0 1-.485-.621l.5-2A.5.5 0 0 1 1 13V6H.5a.5.5 0 0 1-.5-.5v-2A.5.5 0 0 1 .5 3h.89zM3.777 3h8.447L8 1zM2 6v7h1V6zm2 0v7h2.5V6zm3.5 0v7h1V6zm2 0v7H12V6zM13 6v7h1V6zm2-1V4H1v1zm-.39 9H1.39l-.25 1h13.72z"/>
+                </svg>
+                Financing Costs
+            </h5>
+            <p class="text-muted small mb-3">Loan terms that affect your deal calculations</p>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="DownPaymentPercentage" class="form-label">Down Payment *</label>
+            <div class="input-group">
+                <input type="number" step="0.1" class="form-control" id="DownPaymentPercentage" name="DownPaymentPercentage" asp-for="DownPaymentPercentage" required>
+                <span class="input-group-text">%</span>
+            </div>
+            <div class="form-text">Typical: 20% for investment properties</div>
+            <span asp-validation-for="DownPaymentPercentage" class="text-danger"></span>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="DefaultLoanRate" class="form-label">Loan Interest Rate (Annual) *</label>
+            <div class="input-group">
+                <input type="number" step="0.1" class="form-control" id="DefaultLoanRate" name="DefaultLoanRate" asp-for="DefaultLoanRate" required>
+                <span class="input-group-text">%</span>
+            </div>
+            <div class="form-text">Typical: 8-15% for hard money/bridge loans</div>
+            <span asp-validation-for="DefaultLoanRate" class="text-danger"></span>
+        </div>
+    </div>
+
+    <hr class="my-4">
+
     <!-- Profit & Risk Section -->
     <div class="row mb-4">
         <div class="col-12">

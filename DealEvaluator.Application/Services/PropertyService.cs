@@ -300,8 +300,55 @@ public class PropertyService : IPropertyService
 
         var buyingClosingCosts = maxOffer * settings.BuyingClosingCosts;
 
+        // Financing costs
+        var downPayment = maxOffer * settings.DownPaymentPercentage;
+        var loanAmount = maxOffer * (1 - settings.DownPaymentPercentage);
+
+        // Monthly payments
+        double monthlyPayment = 0;
+        double totalInterest = 0;
+        double totalFinancingCosts = 0;
+
+        if (loanAmount > 0 && settings.DefaultLoanRate > 0)
+        {
+            var monthlyRate = settings.DefaultLoanRate / 12;
+            var numberOfPayments = settings.DefaultHoldingMonths;
+
+            // Amortization formula
+            var rateTimesOnePlusRate = monthlyRate * Math.Pow(1 + monthlyRate, numberOfPayments);
+            var onePlusRateToN = Math.Pow(1 + monthlyRate, numberOfPayments);
+            monthlyPayment = loanAmount * (rateTimesOnePlusRate / (onePlusRateToN - 1));
+
+            // Total interest paid over the holding period
+            totalInterest = (monthlyPayment * numberOfPayments) - loanAmount;
+            totalFinancingCosts = totalInterest;
+        }
+
+        // Recalculate max offer to account for financing costs
+        maxOfferNumerator = arv - sellingCosts - totalHoldingCosts - totalRehabWithContingency - desiredProfit - totalFinancingCosts;
+        maxOffer = maxOfferNumerator / (1 + settings.BuyingClosingCosts);
+
+        // Recalculate dependent values with updated max offer
+        buyingClosingCosts = maxOffer * settings.BuyingClosingCosts;
+        downPayment = maxOffer * settings.DownPaymentPercentage;
+        loanAmount = maxOffer * (1 - settings.DownPaymentPercentage);
+
+        // Recalculate financing costs with updated loan amount
+        if (loanAmount > 0 && settings.DefaultLoanRate > 0)
+        {
+            var monthlyRate = settings.DefaultLoanRate / 12;
+            var numberOfPayments = settings.DefaultHoldingMonths;
+
+            var rateTimesOnePlusRate = monthlyRate * Math.Pow(1 + monthlyRate, numberOfPayments);
+            var onePlusRateToN = Math.Pow(1 + monthlyRate, numberOfPayments);
+            monthlyPayment = loanAmount * (rateTimesOnePlusRate / (onePlusRateToN - 1));
+
+            totalInterest = (monthlyPayment * numberOfPayments) - loanAmount;
+            totalFinancingCosts = totalInterest;
+        }
+
         // Total investment
-        var totalInvestment = maxOffer + buyingClosingCosts + totalRehabWithContingency + totalHoldingCosts;
+        var totalInvestment = maxOffer + buyingClosingCosts + totalRehabWithContingency + totalHoldingCosts + totalFinancingCosts;
 
         // Net proceeds from sale
         var netProceeds = arv - sellingCosts;
@@ -324,6 +371,11 @@ public class PropertyService : IPropertyService
             PropertyTaxesCost = (int)Math.Round(propertyTaxesCost),
             InsuranceCost = insuranceCost,
             UtilitiesCost = utilitiesCost,
+            DownPayment = (int)Math.Round(downPayment),
+            LoanAmount = (int)Math.Round(loanAmount),
+            MonthlyPayment = (int)Math.Round(monthlyPayment),
+            TotalInterest = (int)Math.Round(totalInterest),
+            TotalFinancingCosts = (int)Math.Round(totalFinancingCosts),
             ContingencyBuffer = (int)Math.Round(contingencyBuffer),
             CreatedAt = DateTime.UtcNow,
             Comparables = comparables,

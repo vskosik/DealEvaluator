@@ -51,6 +51,8 @@ public class DealSettingsService : IDealSettingsService
             existingSettings.MonthlyInsurance = settings.MonthlyInsurance;
             existingSettings.MonthlyUtilities = settings.MonthlyUtilities;
             existingSettings.DefaultHoldingMonths = settings.DefaultHoldingMonths;
+            existingSettings.DownPaymentPercentage = settings.DownPaymentPercentage;
+            existingSettings.DefaultLoanRate = settings.DefaultLoanRate;
             existingSettings.ProfitTargetType = settings.ProfitTargetType;
             existingSettings.ProfitTargetValue = settings.ProfitTargetValue;
             existingSettings.ContingencyPercentage = settings.ContingencyPercentage;
@@ -84,6 +86,8 @@ public class DealSettingsService : IDealSettingsService
         settings.MonthlyInsurance = defaults.MonthlyInsurance;
         settings.MonthlyUtilities = defaults.MonthlyUtilities;
         settings.DefaultHoldingMonths = defaults.DefaultHoldingMonths;
+        settings.DownPaymentPercentage = defaults.DownPaymentPercentage;
+        settings.DefaultLoanRate = defaults.DefaultLoanRate;
         settings.ProfitTargetType = defaults.ProfitTargetType;
         settings.ProfitTargetValue = defaults.ProfitTargetValue;
         settings.ContingencyPercentage = defaults.ContingencyPercentage;

@@ -50,6 +50,8 @@ public class SettingsController : Controller
                 MonthlyInsurance = settings.MonthlyInsurance,
                 MonthlyUtilities = settings.MonthlyUtilities,
                 DefaultHoldingMonths = settings.DefaultHoldingMonths,
+                DownPaymentPercentage = Math.Round(settings.DownPaymentPercentage * 100, 1),
+                DefaultLoanRate = Math.Round(settings.DefaultLoanRate * 100, 1),
                 ProfitTargetType = settings.ProfitTargetType,
                 ProfitTargetValue = settings.ProfitTargetType == Domain.Enums.ProfitTargetType.PercentageOfArv
                     ? Math.Round(settings.ProfitTargetValue * 100, 1)
@@ -117,6 +119,8 @@ public class SettingsController : Controller
                 MonthlyInsurance = dto.MonthlyInsurance,
                 MonthlyUtilities = dto.MonthlyUtilities,
                 DefaultHoldingMonths = dto.DefaultHoldingMonths,
+                DownPaymentPercentage = dto.DownPaymentPercentage / 100,
+                DefaultLoanRate = dto.DefaultLoanRate / 100,
                 ProfitTargetType = dto.ProfitTargetType,
                 ProfitTargetValue = dto.ProfitTargetType == Domain.Enums.ProfitTargetType.PercentageOfArv
                     ? dto.ProfitTargetValue / 100

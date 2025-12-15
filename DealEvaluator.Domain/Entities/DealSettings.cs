@@ -19,6 +19,8 @@ public class DealSettings
     public int MonthlyInsurance { get; set; } = 150;         // $150/month
     public int MonthlyUtilities { get; set; } = 200;         // $200/month
     public int DefaultHoldingMonths { get; set; } = 4;            // 4 months
+    public double DownPaymentPercentage { get; set; } = 0.2;    // 20%
+    public double DefaultLoanRate { get; set; } = 0.12;     // 12%
 
     // Profit & Risk Settings
     public ProfitTargetType ProfitTargetType { get; set; } = ProfitTargetType.PercentageOfArv;
