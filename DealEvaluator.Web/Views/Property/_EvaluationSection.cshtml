@@ -197,16 +197,16 @@
                                                 <div class="text-muted small mb-1"><strong>− Selling Costs</strong></div>
                                                 @if (Model.LatestEvaluation.AgentCommission.HasValue)
                                                 {
-                                                    <div class="d-flex justify-content-between align-items-center ms-3">
+                                                    <div class="d-flex justify-content-between align-items-center ms-3 py-2 px-2 border-bottom">
                                                         <span class="small">Agent Commission</span>
-                                                        <span class="text-danger">−$@Model.LatestEvaluation.AgentCommission.Value.ToString("N0")</span>
+                                                        <span class="text-danger fw-semibold">−$@Model.LatestEvaluation.AgentCommission.Value.ToString("N0")</span>
                                                     </div>
                                                 }
                                                 @if (Model.LatestEvaluation.SellingClosingCosts.HasValue)
                                                 {
-                                                    <div class="d-flex justify-content-between align-items-center ms-3">
+                                                    <div class="d-flex justify-content-between align-items-center ms-3 py-2 px-2 border-bottom">
                                                         <span class="small">Selling Closing Costs</span>
-                                                        <span class="text-danger">−$@Model.LatestEvaluation.SellingClosingCosts.Value.ToString("N0")</span>
+                                                        <span class="text-danger fw-semibold">−$@Model.LatestEvaluation.SellingClosingCosts.Value.ToString("N0")</span>
                                                     </div>
                                                 }
                                             </div>
@@ -219,23 +219,23 @@
                                                 <div class="text-muted small mb-1"><strong>− Holding Costs</strong></div>
                                                 @if (Model.LatestEvaluation.PropertyTaxesCost.HasValue)
                                                 {
-                                                    <div class="d-flex justify-content-between align-items-center ms-3">
+                                                    <div class="d-flex justify-content-between align-items-center ms-3 py-2 px-2 border-bottom">
                                                         <span class="small">Property Taxes</span>
-                                                        <span class="text-danger">−$@Model.LatestEvaluation.PropertyTaxesCost.Value.ToString("N0")</span>
+                                                        <span class="text-danger fw-semibold">−$@Model.LatestEvaluation.PropertyTaxesCost.Value.ToString("N0")</span>
                                                     </div>
                                                 }
                                                 @if (Model.LatestEvaluation.InsuranceCost.HasValue)
                                                 {
-                                                    <div class="d-flex justify-content-between align-items-center ms-3">
+                                                    <div class="d-flex justify-content-between align-items-center ms-3 py-2 px-2 border-bottom">
                                                         <span class="small">Insurance</span>
-                                                        <span class="text-danger">−$@Model.LatestEvaluation.InsuranceCost.Value.ToString("N0")</span>
+                                                        <span class="text-danger fw-semibold">−$@Model.LatestEvaluation.InsuranceCost.Value.ToString("N0")</span>
                                                     </div>
                                                 }
                                                 @if (Model.LatestEvaluation.UtilitiesCost.HasValue)
                                                 {
-                                                    <div class="d-flex justify-content-between align-items-center ms-3">
+                                                    <div class="d-flex justify-content-between align-items-center ms-3 py-2 px-2 border-bottom">
                                                         <span class="small">Utilities</span>
-                                                        <span class="text-danger">−$@Model.LatestEvaluation.UtilitiesCost.Value.ToString("N0")</span>
+                                                        <span class="text-danger fw-semibold">−$@Model.LatestEvaluation.UtilitiesCost.Value.ToString("N0")</span>
                                                     </div>
                                                 }
                                             </div>
@@ -246,15 +246,15 @@
                                         {
                                             <div class="ms-3 mb-2">
                                                 <div class="text-muted small mb-1"><strong>− Rehab Costs</strong></div>
-                                                <div class="d-flex justify-content-between align-items-center ms-3">
+                                                <div class="d-flex justify-content-between align-items-center ms-3 py-2 px-2 border-bottom">
                                                     <span class="small">Base Rehab Cost</span>
-                                                    <span class="text-danger">−$@Model.LatestEvaluation.RepairCost.Value.ToString("N0")</span>
+                                                    <span class="text-danger fw-semibold">−$@Model.LatestEvaluation.RepairCost.Value.ToString("N0")</span>
                                                 </div>
                                                 @if (Model.LatestEvaluation.ContingencyBuffer.HasValue)
                                                 {
-                                                    <div class="d-flex justify-content-between align-items-center ms-3">
+                                                    <div class="d-flex justify-content-between align-items-center ms-3 py-2 px-2 border-bottom">
                                                         <span class="small">Contingency Buffer</span>
-                                                        <span class="text-danger">−$@Model.LatestEvaluation.ContingencyBuffer.Value.ToString("N0")</span>
+                                                        <span class="text-danger fw-semibold">−$@Model.LatestEvaluation.ContingencyBuffer.Value.ToString("N0")</span>
                                                     </div>
                                                 }
                                             </div>
@@ -267,30 +267,30 @@
                                                 <div class="text-muted small mb-1"><strong>− Financing Costs</strong></div>
                                                 @if (Model.LatestEvaluation.DownPayment.HasValue)
                                                 {
-                                                    <div class="d-flex justify-content-between align-items-center ms-3">
+                                                    <div class="d-flex justify-content-between align-items-center ms-3 py-2 px-2 border-bottom bg-light bg-opacity-50">
                                                         <span class="small">Down Payment</span>
-                                                        <span class="text-info">$@Model.LatestEvaluation.DownPayment.Value.ToString("N0")</span>
+                                                        <span class="text-info fw-semibold">$@Model.LatestEvaluation.DownPayment.Value.ToString("N0")</span>
                                                     </div>
                                                 }
                                                 @if (Model.LatestEvaluation.LoanAmount.HasValue)
                                                 {
-                                                    <div class="d-flex justify-content-between align-items-center ms-3">
+                                                    <div class="d-flex justify-content-between align-items-center ms-3 py-2 px-2 border-bottom bg-light bg-opacity-50">
                                                         <span class="small">Loan Amount</span>
-                                                        <span class="text-info">$@Model.LatestEvaluation.LoanAmount.Value.ToString("N0")</span>
+                                                        <span class="text-info fw-semibold">$@Model.LatestEvaluation.LoanAmount.Value.ToString("N0")</span>
                                                     </div>
                                                 }
                                                 @if (Model.LatestEvaluation.MonthlyPayment.HasValue)
                                                 {
-                                                    <div class="d-flex justify-content-between align-items-center ms-3">
+                                                    <div class="d-flex justify-content-between align-items-center ms-3 py-2 px-2 border-bottom bg-light bg-opacity-50">
                                                         <span class="small">Monthly Payment</span>
-                                                        <span class="text-info">$@Model.LatestEvaluation.MonthlyPayment.Value.ToString("N0")</span>
+                                                        <span class="text-info fw-semibold">$@Model.LatestEvaluation.MonthlyPayment.Value.ToString("N0")</span>
                                                     </div>
                                                 }
                                                 @if (Model.LatestEvaluation.TotalInterest.HasValue)
                                                 {
-                                                    <div class="d-flex justify-content-between align-items-center ms-3">
+                                                    <div class="d-flex justify-content-between align-items-center ms-3 py-2 px-2 border-bottom">
                                                         <span class="small">Total Interest</span>
-                                                        <span class="text-danger">−$@Model.LatestEvaluation.TotalInterest.Value.ToString("N0")</span>
+                                                        <span class="text-danger fw-semibold">−$@Model.LatestEvaluation.TotalInterest.Value.ToString("N0")</span>
                                                     </div>
                                                 }
                                             </div>
@@ -300,9 +300,9 @@
                                         @if (Model.LatestEvaluation.BuyingClosingCosts.HasValue)
                                         {
                                             <div class="ms-3 mb-2">
-                                                <div class="d-flex justify-content-between align-items-center ms-3">
+                                                <div class="d-flex justify-content-between align-items-center ms-3 py-2 px-2 border-bottom">
                                                     <span class="small"><strong>− Buying Closing Costs</strong></span>
-                                                    <span class="text-danger">−$@Model.LatestEvaluation.BuyingClosingCosts.Value.ToString("N0")</span>
+                                                    <span class="text-danger fw-semibold">−$@Model.LatestEvaluation.BuyingClosingCosts.Value.ToString("N0")</span>
                                                 </div>
                                             </div>
                                         }
@@ -311,9 +311,9 @@
                                         @if (Model.LatestEvaluation.Profit.HasValue)
                                         {
                                             <div class="ms-3 mb-2">
-                                                <div class="d-flex justify-content-between align-items-center ms-3">
+                                                <div class="d-flex justify-content-between align-items-center ms-3 py-2 px-2 border-bottom">
                                                     <span class="small"><strong>− Desired Profit</strong></span>
-                                                    <span class="text-danger">−$@Model.LatestEvaluation.Profit.Value.ToString("N0")</span>
+                                                    <span class="text-danger fw-semibold">−$@Model.LatestEvaluation.Profit.Value.ToString("N0")</span>
                                                 </div>
                                             </div>
                                         }
