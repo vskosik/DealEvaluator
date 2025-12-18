@@ -15,15 +15,21 @@ public class PropertyController : BaseAuthorizedController
 {
     private readonly ILogger<PropertyController> _logger;
     private readonly IMarketDataService _marketDataService;
+    private readonly ILenderService _lenderService;
+    private readonly IDealSettingsService _dealSettingsService;
 
     public PropertyController(
         ILogger<PropertyController> logger,
         IPropertyService propertyService,
         IAuthorizationService authorizationService,
-        IMarketDataService marketDataService) : base(propertyService, authorizationService)
+        IMarketDataService marketDataService,
+        ILenderService lenderService,
+        IDealSettingsService dealSettingsService) : base(propertyService, authorizationService)
     {
         _logger = logger;
         _marketDataService = marketDataService;
+        _lenderService = lenderService;
+        _dealSettingsService = dealSettingsService;
     }
 
     // GET: Property/Index - List all user's properties
@@ -104,13 +110,19 @@ public class PropertyController : BaseAuthorizedController
             // Get all comparables for this property
             var comparables = await PropertyService.GetComparablesAsync(id);
 
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var lenders = await _lenderService.GetUserLendersAsync(userId);
+            var settings = await _dealSettingsService.GetUserSettingsAsync(userId);
+
             // Create ViewModel with property, evaluations, and comparables
             var viewModel = new PropertyDetailsViewModel
             {
                 Property = property!,
                 LatestEvaluation = latestEvaluation,
                 EvaluationHistory = evaluations.Skip(1).ToList(), // All except the latest
-                Comparables = comparables
+                Comparables = comparables,
+                Lenders = lenders,
+                DefaultLenderId = settings.DefaultLenderId
             };
 
             return View(viewModel);

@@ -19,6 +19,7 @@ public class PropertyService : IPropertyService
     private readonly IDealSettingsService _dealSettingsService;
     private readonly IMapper _mapper;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILenderRepository _lenderRepository;
 
     public PropertyService(
         IPropertyRepository propertyRepository,
@@ -26,6 +27,7 @@ public class PropertyService : IPropertyService
         ICompService compService,
         IRehabCostTemplateRepository rehabTemplateRepository,
         IDealSettingsService dealSettingsService,
+        ILenderRepository lenderRepository,
         IMapper mapper,
         IHttpClientFactory httpClientFactory)
     {
@@ -34,6 +36,7 @@ public class PropertyService : IPropertyService
         _compService = compService;
         _rehabTemplateRepository = rehabTemplateRepository;
         _dealSettingsService = dealSettingsService;
+        _lenderRepository = lenderRepository;
         _mapper = mapper;
         _httpClientFactory = httpClientFactory;
     }
@@ -301,27 +304,59 @@ public class PropertyService : IPropertyService
         var buyingClosingCosts = maxOffer * settings.BuyingClosingCosts;
 
         // Financing costs
+        Lender? lender = null;
+        if (!dto.UseDefaultLoanRate)
+        {
+            if (dto.LenderId.HasValue)
+            {
+                lender = await _lenderRepository.GetByIdForUserAsync(dto.LenderId.Value, userId);
+                if (lender == null)
+                    throw new InvalidOperationException("Selected lender was not found.");
+            }
+            else if (settings.DefaultLenderId.HasValue)
+            {
+                lender = await _lenderRepository.GetByIdForUserAsync(settings.DefaultLenderId.Value, userId);
+            }
+        }
+
+        var annualRate = lender?.AnnualRate ?? settings.DefaultLoanRate;
+        var originationFeeRate = lender?.OriginationFee ?? 0;
+        var loanServiceFeeRate = lender?.LoanServiceFee ?? 0;
+
         var downPayment = maxOffer * settings.DownPaymentPercentage;
         var loanAmount = maxOffer * (1 - settings.DownPaymentPercentage);
 
         // Monthly payments
         double monthlyPayment = 0;
+        double monthlyPrincipalInterest = 0;
+        double monthlyServiceFee = 0;
         double totalInterest = 0;
         double totalFinancingCosts = 0;
+        double originationFeeCost = 0;
+        double loanServiceFeeCost = 0;
 
-        if (loanAmount > 0 && settings.DefaultLoanRate > 0)
+        if (loanAmount > 0)
         {
-            var monthlyRate = settings.DefaultLoanRate / 12;
-            var numberOfPayments = settings.DefaultHoldingMonths;
+            monthlyServiceFee = loanAmount * loanServiceFeeRate;
+            loanServiceFeeCost = monthlyServiceFee * settings.DefaultHoldingMonths;
 
-            // Amortization formula
-            var rateTimesOnePlusRate = monthlyRate * Math.Pow(1 + monthlyRate, numberOfPayments);
-            var onePlusRateToN = Math.Pow(1 + monthlyRate, numberOfPayments);
-            monthlyPayment = loanAmount * (rateTimesOnePlusRate / (onePlusRateToN - 1));
+            if (annualRate > 0)
+            {
+                var monthlyRate = annualRate / 12;
+                var numberOfPayments = settings.DefaultHoldingMonths;
 
-            // Total interest paid over the holding period
-            totalInterest = (monthlyPayment * numberOfPayments) - loanAmount;
-            totalFinancingCosts = totalInterest;
+                // Amortization formula
+                var rateTimesOnePlusRate = monthlyRate * Math.Pow(1 + monthlyRate, numberOfPayments);
+                var onePlusRateToN = Math.Pow(1 + monthlyRate, numberOfPayments);
+                monthlyPrincipalInterest = loanAmount * (rateTimesOnePlusRate / (onePlusRateToN - 1));
+
+                // Total interest paid over the holding period
+                totalInterest = (monthlyPrincipalInterest * numberOfPayments) - loanAmount;
+            }
+
+            originationFeeCost = loanAmount * originationFeeRate;
+            totalFinancingCosts = totalInterest + originationFeeCost + loanServiceFeeCost;
+            monthlyPayment = monthlyPrincipalInterest + monthlyServiceFee;
         }
 
         // Recalculate max offer to account for financing costs
@@ -334,17 +369,32 @@ public class PropertyService : IPropertyService
         loanAmount = maxOffer * (1 - settings.DownPaymentPercentage);
 
         // Recalculate financing costs with updated loan amount
-        if (loanAmount > 0 && settings.DefaultLoanRate > 0)
+        monthlyPrincipalInterest = 0;
+        monthlyServiceFee = 0;
+        totalInterest = 0;
+        originationFeeCost = 0;
+        loanServiceFeeCost = 0;
+
+        if (loanAmount > 0)
         {
-            var monthlyRate = settings.DefaultLoanRate / 12;
-            var numberOfPayments = settings.DefaultHoldingMonths;
+            monthlyServiceFee = loanAmount * loanServiceFeeRate;
+            loanServiceFeeCost = monthlyServiceFee * settings.DefaultHoldingMonths;
 
-            var rateTimesOnePlusRate = monthlyRate * Math.Pow(1 + monthlyRate, numberOfPayments);
-            var onePlusRateToN = Math.Pow(1 + monthlyRate, numberOfPayments);
-            monthlyPayment = loanAmount * (rateTimesOnePlusRate / (onePlusRateToN - 1));
+            if (annualRate > 0)
+            {
+                var monthlyRate = annualRate / 12;
+                var numberOfPayments = settings.DefaultHoldingMonths;
 
-            totalInterest = (monthlyPayment * numberOfPayments) - loanAmount;
-            totalFinancingCosts = totalInterest;
+                var rateTimesOnePlusRate = monthlyRate * Math.Pow(1 + monthlyRate, numberOfPayments);
+                var onePlusRateToN = Math.Pow(1 + monthlyRate, numberOfPayments);
+                monthlyPrincipalInterest = loanAmount * (rateTimesOnePlusRate / (onePlusRateToN - 1));
+
+                totalInterest = (monthlyPrincipalInterest * numberOfPayments) - loanAmount;
+            }
+
+            originationFeeCost = loanAmount * originationFeeRate;
+            totalFinancingCosts = totalInterest + originationFeeCost + loanServiceFeeCost;
+            monthlyPayment = monthlyPrincipalInterest + monthlyServiceFee;
         }
 
         // Total investment
@@ -375,8 +425,11 @@ public class PropertyService : IPropertyService
             LoanAmount = (int)Math.Round(loanAmount),
             MonthlyPayment = (int)Math.Round(monthlyPayment),
             TotalInterest = (int)Math.Round(totalInterest),
+            OriginationFeeCost = (int)Math.Round(originationFeeCost),
+            LoanServiceFeeCost = (int)Math.Round(loanServiceFeeCost),
             TotalFinancingCosts = (int)Math.Round(totalFinancingCosts),
             ContingencyBuffer = (int)Math.Round(contingencyBuffer),
+            LenderId = lender?.Id,
             CreatedAt = DateTime.UtcNow,
             Comparables = comparables,
             RehabEstimate = rehabEstimate

@@ -91,6 +91,19 @@ public class DealSettingsService : IDealSettingsService
         settings.ProfitTargetType = defaults.ProfitTargetType;
         settings.ProfitTargetValue = defaults.ProfitTargetValue;
         settings.ContingencyPercentage = defaults.ContingencyPercentage;
+        settings.DefaultLenderId = defaults.DefaultLenderId;
+        settings.UpdatedAt = DateTime.UtcNow;
+
+        _repository.Update(settings);
+        await _repository.SaveChangesAsync();
+
+        return settings;
+    }
+
+    public async Task<DealSettings> SetDefaultLenderAsync(string userId, int? lenderId)
+    {
+        var settings = await GetUserSettingsAsync(userId);
+        settings.DefaultLenderId = lenderId;
         settings.UpdatedAt = DateTime.UtcNow;
 
         _repository.Update(settings);

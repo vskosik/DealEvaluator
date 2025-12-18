@@ -25,4 +25,9 @@ public interface IDealSettingsService
     /// <param name="userId">The user's ID</param>
     /// <returns>The reset settings with default values</returns>
     Task<DealSettings> ResetToDefaultsAsync(string userId);
+
+    /// <summary>
+    /// Sets or clears the default lender for a user
+    /// </summary>
+    Task<DealSettings> SetDefaultLenderAsync(string userId, int? lenderId);
 }

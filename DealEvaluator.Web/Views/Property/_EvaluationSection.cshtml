@@ -293,6 +293,27 @@
                                                         <span class="text-danger fw-semibold">−$@Model.LatestEvaluation.TotalInterest.Value.ToString("N0")</span>
                                                     </div>
                                                 }
+                                                @if (Model.LatestEvaluation.OriginationFeeCost.HasValue)
+                                                {
+                                                    <div class="d-flex justify-content-between align-items-center ms-3 py-2 px-2 border-bottom">
+                                                        <span class="small">Origination Fees</span>
+                                                        <span class="text-danger fw-semibold">−$@Model.LatestEvaluation.OriginationFeeCost.Value.ToString("N0")</span>
+                                                    </div>
+                                                }
+                                                @if (Model.LatestEvaluation.LoanServiceFeeCost.HasValue)
+                                                {
+                                                    <div class="d-flex justify-content-between align-items-center ms-3 py-2 px-2 border-bottom">
+                                                        <span class="small">Loan Servicing Fees</span>
+                                                        <span class="text-danger fw-semibold">−$@Model.LatestEvaluation.LoanServiceFeeCost.Value.ToString("N0")</span>
+                                                    </div>
+                                                }
+                                                @if (Model.LatestEvaluation.TotalFinancingCosts.HasValue)
+                                                {
+                                                    <div class="d-flex justify-content-between align-items-center ms-3 py-2 px-2 border-bottom">
+                                                        <span class="small"><strong>Total Financing Costs</strong></span>
+                                                        <span class="text-danger fw-semibold">−$@Model.LatestEvaluation.TotalFinancingCosts.Value.ToString("N0")</span>
+                                                    </div>
+                                                }
                                             </div>
                                         }
 

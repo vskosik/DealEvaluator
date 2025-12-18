@@ -33,15 +33,19 @@ public class Evaluation
     public int? LoanAmount { get; set; }
     public int? MonthlyPayment { get; set; }
     public int? TotalInterest { get; set; }
+    public int? OriginationFeeCost { get; set; }
+    public int? LoanServiceFeeCost { get; set; }
     public int? TotalFinancingCosts { get; set; }
 
     public int? ContingencyBuffer { get; set; }
+    public int? LenderId { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation properties
     public ICollection<Comparable> Comparables { get; set; } = new List<Comparable>();
     public RehabEstimate? RehabEstimate { get; set; }
+    public Lender? Lender { get; set; }
 
     // Computed - Ignored
     public int? RepairCost => RehabEstimate != null ? (int?)Math.Round(RehabEstimate.TotalCost) : null;

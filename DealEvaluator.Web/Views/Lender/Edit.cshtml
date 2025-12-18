@@ -1,0 +1,62 @@
+@model DealEvaluator.Web.Models.LenderFormViewModel
+
+@{
+    ViewData["Title"] = "Edit Lender";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="card-title fw-bold mb-3">Edit Lender</h2>
+                    <p class="text-muted">Update lender rates and fees.</p>
+
+                    <form asp-action="Edit" method="post" novalidate class="needs-validation">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label"></label>
+                            <input asp-for="Name" class="form-control" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="AnnualRate" class="form-label">Annual Rate (%)</label>
+                                <input asp-for="AnnualRate" class="form-control" type="number" step="0.01" />
+                                <span asp-validation-for="AnnualRate" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="OriginationFee" class="form-label">Origination Fee (%)</label>
+                                <input asp-for="OriginationFee" class="form-control" type="number" step="0.01" />
+                                <span asp-validation-for="OriginationFee" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="LoanServiceFee" class="form-label">Loan Service Fee (% per month)</label>
+                                <input asp-for="LoanServiceFee" class="form-control" type="number" step="0.01" />
+                                <span asp-validation-for="LoanServiceFee" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Note" class="form-label">Note (optional)</label>
+                            <textarea asp-for="Note" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Note" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

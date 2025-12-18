@@ -7,6 +7,7 @@ function evaluationModal() {
         lineItems: [],
         editingIndex: null,
         _eventListenerAttached: false,
+        useDefaultLoanRate: false,
 
         // New item form
         newItem: {

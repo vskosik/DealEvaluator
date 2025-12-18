@@ -37,6 +37,11 @@ public class EvaluationConfiguration : IEntityTypeConfiguration<Evaluation>
                 j => j.HasOne<Comparable>().WithMany().HasForeignKey("ComparableId").OnDelete(DeleteBehavior.Cascade),
                 j => j.HasOne<Evaluation>().WithMany().HasForeignKey("EvaluationId").OnDelete(DeleteBehavior.NoAction)
             );
+
+        builder.HasOne(x => x.Lender)
+            .WithMany(x => x.Evaluations)
+            .HasForeignKey(x => x.LenderId)
+            .OnDelete(DeleteBehavior.ClientSetNull);
         
         // Ignore computed property
         builder.Ignore(x => x.RepairCost);

@@ -21,6 +21,7 @@ public class DealSettingsDto
     public int DefaultHoldingMonths { get; set; }
     public double DownPaymentPercentage { get; set; }
     public double DefaultLoanRate { get; set; }
+    public int? DefaultLenderId { get; set; }
 
     // Profit & Risk Settings
     public ProfitTargetType ProfitTargetType { get; set; }

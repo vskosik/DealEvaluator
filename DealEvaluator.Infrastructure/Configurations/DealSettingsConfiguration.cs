@@ -47,6 +47,9 @@ public class DealSettingsConfiguration : IEntityTypeConfiguration<DealSettings>
         builder.Property(x => x.DefaultHoldingMonths)
             .IsRequired();
 
+        builder.Property(x => x.DefaultLenderId)
+            .IsRequired(false);
+
         // Profit & Risk Settings
         builder.Property(x => x.ProfitTargetType)
             .IsRequired()
@@ -67,5 +70,10 @@ public class DealSettingsConfiguration : IEntityTypeConfiguration<DealSettings>
 
         builder.Property(x => x.UpdatedAt)
             .IsRequired(false);
+
+        builder.HasOne(x => x.DefaultLender)
+            .WithMany()
+            .HasForeignKey(x => x.DefaultLenderId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

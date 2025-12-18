@@ -4,6 +4,7 @@ using DealEvaluator.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DealEvaluator.Web.Migrations
 {
     [DbContext(typeof(DealEvaluatorContext))]
-    partial class DealEvaluatorContextModelSnapshot : ModelSnapshot
+    [Migration("20251218184814_AddedLenders")]
+    partial class AddedLenders
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -219,16 +222,10 @@ namespace DealEvaluator.Web.Migrations
                     b.Property<int?>("LoanAmount")
                         .HasColumnType("int");
 
-                    b.Property<int?>("LoanServiceFeeCost")
-                        .HasColumnType("int");
-
                     b.Property<int?>("MaxOffer")
                         .HasColumnType("int");
 
                     b.Property<int?>("MonthlyPayment")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("OriginationFeeCost")
                         .HasColumnType("int");
 
                     b.Property<int?>("Profit")

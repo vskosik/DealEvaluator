@@ -21,6 +21,7 @@ public class DealSettings
     public int DefaultHoldingMonths { get; set; } = 4;            // 4 months
     public double DownPaymentPercentage { get; set; } = 0.2;    // 20%
     public double DefaultLoanRate { get; set; } = 0.12;     // 12%
+    public int? DefaultLenderId { get; set; }
 
     // Profit & Risk Settings
     public ProfitTargetType ProfitTargetType { get; set; } = ProfitTargetType.PercentageOfArv;
@@ -29,4 +30,7 @@ public class DealSettings
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
+
+    // Navigation properties
+    public Lender? DefaultLender { get; set; }
 }
