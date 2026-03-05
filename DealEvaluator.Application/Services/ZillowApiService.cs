@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using DealEvaluator.Application.DTOs.Zillow;
@@ -13,6 +14,11 @@ public class ZillowApiService
     private readonly string _apiKey;
     private readonly string _baseUrl;
     private readonly string _rapidApiHost;
+    private readonly int _baseDelayMs;
+    private readonly int _maxRetries;
+    private readonly int _initialBackoffMs;
+    private readonly int _maxBackoffMs;
+    private readonly int _jitterMs;
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
@@ -33,6 +39,11 @@ public class ZillowApiService
                          ?? throw new InvalidOperationException("ZillowRapidApiHost is missing in configuration");
 
         _baseUrl = "https://" + _rapidApiHost;
+        _baseDelayMs = GetConfigInt(configuration, "ZillowApiRateLimit:BaseDelayMs", 1000);
+        _maxRetries = GetConfigInt(configuration, "ZillowApiRateLimit:MaxRetries", 4);
+        _initialBackoffMs = GetConfigInt(configuration, "ZillowApiRateLimit:InitialBackoffMs", 2000);
+        _maxBackoffMs = GetConfigInt(configuration, "ZillowApiRateLimit:MaxBackoffMs", 20000);
+        _jitterMs = GetConfigInt(configuration, "ZillowApiRateLimit:JitterMs", 300);
     }
 
     public async Task<ZillowSearchResponse> SearchPropertiesAsync(ZillowSearchRequest request)
@@ -69,6 +80,12 @@ public class ZillowApiService
             }
 
             currentPage++;
+
+            if (currentPage <= totalPages)
+            {
+                _logger.LogDebug("Applying page delay of {DelayMs}ms before next Zillow request", _baseDelayMs);
+                await Task.Delay(_baseDelayMs);
+            }
         } while (currentPage <= totalPages);
 
         _logger.LogInformation(
@@ -121,11 +138,95 @@ public class ZillowApiService
         httpRequest.Headers.Add("x-rapidapi-key", _apiKey);
         httpRequest.Headers.Add("x-rapidapi-host", _rapidApiHost);
 
-        var response = await _httpClient.SendAsync(httpRequest);
-        response.EnsureSuccessStatusCode();
+        return await SendWithRetryAsync(httpRequest, request.Page);
+    }
 
-        var json = await response.Content.ReadAsStringAsync();
+    private async Task<ZillowSearchResponse> SendWithRetryAsync(HttpRequestMessage initialRequest, int page)
+    {
+        var random = new Random();
 
-        return JsonSerializer.Deserialize<ZillowSearchResponse>(json, JsonOptions)!;
+        for (var attempt = 0; attempt <= _maxRetries; attempt++)
+        {
+            using var request = CloneRequest(initialRequest);
+            using var response = await _httpClient.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                return JsonSerializer.Deserialize<ZillowSearchResponse>(json, JsonOptions)!;
+            }
+
+            var statusCode = response.StatusCode;
+            var shouldRetry = IsRetryableStatusCode(statusCode);
+
+            if (!shouldRetry || attempt == _maxRetries)
+            {
+                var responseText = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException(
+                    $"Zillow request failed for page {page} with status {(int)statusCode} {statusCode}. Body: {responseText}",
+                    null,
+                    statusCode);
+            }
+
+            var retryDelay = GetRetryDelay(response, attempt, random);
+            _logger.LogWarning(
+                "Zillow request throttled/failed for page {Page}. Status: {StatusCode}. Attempt {Attempt}/{MaxRetries}. Retrying in {DelayMs}ms",
+                page, (int)statusCode, attempt + 1, _maxRetries, retryDelay.TotalMilliseconds);
+
+            await Task.Delay(retryDelay);
+        }
+
+        throw new InvalidOperationException("Retry loop exited unexpectedly.");
+    }
+
+    private static HttpRequestMessage CloneRequest(HttpRequestMessage source)
+    {
+        var clone = new HttpRequestMessage(source.Method, source.RequestUri);
+
+        foreach (var header in source.Headers)
+        {
+            clone.Headers.TryAddWithoutValidation(header.Key, header.Value);
+        }
+
+        return clone;
+    }
+
+    private static bool IsRetryableStatusCode(HttpStatusCode statusCode)
+    {
+        if (statusCode == HttpStatusCode.TooManyRequests)
+        {
+            return true;
+        }
+
+        var numericStatusCode = (int)statusCode;
+        return numericStatusCode >= 500 && numericStatusCode < 600;
+    }
+
+    private TimeSpan GetRetryDelay(HttpResponseMessage response, int attempt, Random random)
+    {
+        var retryAfter = response.Headers.RetryAfter;
+        if (retryAfter?.Delta.HasValue == true)
+        {
+            return retryAfter.Delta.Value;
+        }
+
+        if (retryAfter?.Date.HasValue == true)
+        {
+            var delay = retryAfter.Date.Value - DateTimeOffset.UtcNow;
+            if (delay > TimeSpan.Zero)
+            {
+                return delay;
+            }
+        }
+
+        var exponentialBackoffMs = Math.Min(_maxBackoffMs, _initialBackoffMs * (int)Math.Pow(2, attempt));
+        var jitter = random.Next(0, Math.Max(1, _jitterMs));
+        return TimeSpan.FromMilliseconds(exponentialBackoffMs + jitter);
+    }
+
+    private static int GetConfigInt(IConfiguration configuration, string key, int fallback)
+    {
+        var raw = configuration[key];
+        return int.TryParse(raw, out var parsed) && parsed >= 0 ? parsed : fallback;
     }
 }

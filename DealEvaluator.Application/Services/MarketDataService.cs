@@ -91,7 +91,6 @@ public class MarketDataService : IMarketDataService
         return await _marketDataRepository.IsFreshDataAvailableAsync(zipCode, homeType, keywords);
     }
 
-    // TODO: Implement cache expiration logic to automatically refresh stale data
     private bool IsExpired(MarketData marketData)
     {
         // If ExpiresAt is not set, consider it never expires
