@@ -4,7 +4,9 @@ using DealEvaluator.Domain.Entities;
 using DealEvaluator.Infrastructure;
 using DealEvaluator.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace DealEvaluator.Web;
 
@@ -41,15 +43,28 @@ public class Program
         
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
+        builder.Services.AddHealthChecks();
+
+        builder.Services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+
+            // Required when running behind cloud load balancers/reverse proxies (e.g., Azure App Service).
+            options.KnownNetworks.Clear();
+            options.KnownProxies.Clear();
+        });
         
         var app = builder.Build();
 
-        // Auto-apply migrations in Development
-        if (app.Environment.IsDevelopment())
+        var applyMigrationsOnStartup = app.Configuration.GetValue(
+            "Database:ApplyMigrationsOnStartup",
+            app.Environment.IsDevelopment());
+
+        if (applyMigrationsOnStartup)
         {
             using var scope = app.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<DealEvaluatorContext>();
-            await dbContext.Database.EnsureCreatedAsync();
+            await dbContext.Database.MigrateAsync();
         }
 
         if (!app.Environment.IsDevelopment())
@@ -57,9 +72,15 @@ public class Program
             app.UseExceptionHandler("/Home/Error");
             app.UseHsts();
         }
-        
-        app.UseSwagger();
-        app.UseSwaggerUI();
+
+        app.UseForwardedHeaders();
+
+        var enableSwagger = app.Configuration.GetValue("Swagger:Enabled", app.Environment.IsDevelopment());
+        if (enableSwagger)
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
+        }
 
         app.MapIdentityApi<User>();
 
@@ -74,6 +95,8 @@ public class Program
 
         app.UseAuthentication();
         app.UseAuthorization();
+
+        app.MapHealthChecks("/health");
 
         app.MapControllerRoute(
             name: "default",
