@@ -97,17 +97,19 @@ public class AccountController : Controller
         }
         
         
-        var user = new User { UserName = model.Name, Email = model.Email, CompanyName = model.CompanyName };
+        var user = new User { UserName = model.Email, Email = model.Email, FullName = model.FullName, CompanyName = model.CompanyName };
         var result = await _userManager.CreateAsync(user, model.Password);
 
         if (result.Succeeded)
         {
+            await _signInManager.SignInAsync(user, isPersistent: false);
             TempData["Notification"] = "Account created successfully.";
             TempData["NotificationType"] = "success";
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("Index", "Property");
         }
-        
-        ModelState.AddModelError(string.Empty, "Invalid register attempt.");
+
+        foreach (var error in result.Errors)
+            ModelState.AddModelError(string.Empty, error.Description);
         return View(model);
     }
 }

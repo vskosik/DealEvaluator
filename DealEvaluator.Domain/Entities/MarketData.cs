@@ -10,10 +10,10 @@ public class MarketData
 
     public string Source { get; set; }
 
-    public string RawJson { get; set; }
-
     public string? Keywords { get; set; }
 
     public DateTime FetchedAt { get; set; } = DateTime.UtcNow;
     public DateTime? ExpiresAt { get; set; }
+
+    public ICollection<CachedProperty> Properties { get; set; } = new List<CachedProperty>();
 }

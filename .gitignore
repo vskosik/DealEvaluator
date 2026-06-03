@@ -5,6 +5,8 @@
 # Ignore build artifacts
 bin/
 obj/
+publish/
+deploy.zip
 *.dll
 *.pdb
 *.exe

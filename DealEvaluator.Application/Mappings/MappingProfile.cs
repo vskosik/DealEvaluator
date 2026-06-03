@@ -1,7 +1,6 @@
 using AutoMapper;
 using DealEvaluator.Application.DTOs.Comparable;
 using DealEvaluator.Application.DTOs.Evaluation;
-using DealEvaluator.Application.DTOs.MarketData;
 using DealEvaluator.Application.DTOs.Property;
 using DealEvaluator.Application.DTOs.Rehab;
 using DealEvaluator.Application.DTOs.User;
@@ -27,10 +26,6 @@ public class MappingProfile : Profile
         // Comparable mappings
         CreateMap<Comparable, ComparableDto>();
         CreateMap<CreateComparableDto, Comparable>();
-
-        // MarketData mappings
-        CreateMap<MarketData, MarketDataDto>();
-        CreateMap<CreateMarketDataDto, MarketData>();
 
         // User mappings
         CreateMap<User, UserDto>();

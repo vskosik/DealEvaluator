@@ -45,7 +45,7 @@ public class UserController : Controller
 
         var model = new EditProfileViewModel
         {
-            UserName = user.UserName,
+            FullName = user.FullName,
             Email = user.Email,
             CompanyName = user.CompanyName
         };
@@ -71,8 +71,9 @@ public class UserController : Controller
         }
 
         // Update user properties
-        user.UserName = model.UserName;
+        user.FullName = model.FullName;
         user.Email = model.Email;
+        user.UserName = model.Email;
         user.CompanyName = model.CompanyName;
 
         var result = await _userManager.UpdateAsync(user);

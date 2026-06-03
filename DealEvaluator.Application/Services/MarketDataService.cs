@@ -1,4 +1,3 @@
-using System.Text.Json;
 using DealEvaluator.Application.DTOs.Zillow;
 using DealEvaluator.Application.Interfaces;
 using DealEvaluator.Domain.Entities;
@@ -31,7 +30,8 @@ public class MarketDataService : IMarketDataService
         if (cachedData != null && !IsExpired(cachedData))
         {
             _logger.LogInformation("Using cached market data for zip code: {ZipCode}, homeType: {HomeType}, keywords: {Keywords}", zipCode, homeType, keywords);
-            return ParseRawJson(cachedData.RawJson);
+            var cached = await _marketDataRepository.GetPropertiesAsync(zipCode, homeType, keywords);
+            return cached.Select(MapToZillowProperty).ToList();
         }
 
         _logger.LogInformation("Cache miss or expired for zip code: {ZipCode}, homeType: {HomeType}, keywords: {Keywords}. Fetching from Zillow API.", zipCode, homeType, keywords);
@@ -43,7 +43,6 @@ public class MarketDataService : IMarketDataService
     {
         _logger.LogInformation("Refreshing market data from Zillow API for zip code: {ZipCode}, homeType: {HomeType}, keywords: {Keywords}", zipCode, homeType, keywords);
 
-        // Parse homeType string to enum
         if (!Enum.TryParse<ZillowHomeType>(homeType, out var parsedHomeType))
         {
             _logger.LogWarning("Invalid home type: {HomeType}. Defaulting to Houses.", homeType);
@@ -76,12 +75,13 @@ public class MarketDataService : IMarketDataService
             HomeType = homeType,
             Keywords = keywords,
             Source = "Zillow",
-            RawJson = JsonSerializer.Serialize(response.Properties),
             FetchedAt = DateTime.UtcNow,
-            ExpiresAt = DateTime.UtcNow.AddDays(30) // Cache for 30 days
+            ExpiresAt = DateTime.UtcNow.AddDays(30)
         };
 
-        await _marketDataRepository.UpsertAsync(marketData);
+        var cachedProperties = response.Properties.Select(MapToCachedProperty).ToList();
+
+        await _marketDataRepository.UpsertAsync(marketData, cachedProperties);
 
         return response.Properties;
     }
@@ -93,24 +93,49 @@ public class MarketDataService : IMarketDataService
 
     private bool IsExpired(MarketData marketData)
     {
-        // If ExpiresAt is not set, consider it never expires
-        if (marketData.ExpiresAt == null)
-            return false;
-
+        if (marketData.ExpiresAt == null) return false;
         return marketData.ExpiresAt.Value < DateTime.UtcNow;
     }
 
-    private List<ZillowProperty> ParseRawJson(string rawJson)
+    private static CachedProperty MapToCachedProperty(ZillowProperty p) => new()
     {
-        try
-        {
-            return JsonSerializer.Deserialize<List<ZillowProperty>>(rawJson)
-                   ?? new List<ZillowProperty>();
-        }
-        catch (JsonException ex)
-        {
-            _logger.LogError(ex, "Failed to parse cached market data JSON");
-            return new List<ZillowProperty>();
-        }
-    }
+        Zpid = p.Id,
+        PropertyType = p.PropertyType,
+        Address = p.Address,
+        City = p.City,
+        State = p.State,
+        ZipCode = p.ZipCode,
+        Latitude = p.Latitude,
+        Longitude = p.Longitude,
+        Bedrooms = p.Bedrooms,
+        Bathrooms = p.Bathrooms,
+        LivingArea = p.LivingArea,
+        DetailUrl = p.DetailUrl,
+        ListingStatus = p.ListingStatus,
+        Zestimate = p.Zestimate,
+        DaysOnZillow = p.DaysOnZillow,
+        Price = p.Price,
+        DateSoldTimestamp = p.DateSoldTimestamp
+    };
+
+    private static ZillowProperty MapToZillowProperty(CachedProperty p) => new()
+    {
+        Id = p.Zpid,
+        PropertyType = p.PropertyType,
+        Address = p.Address,
+        City = p.City,
+        State = p.State,
+        ZipCode = p.ZipCode,
+        Latitude = p.Latitude,
+        Longitude = p.Longitude,
+        Bedrooms = p.Bedrooms,
+        Bathrooms = p.Bathrooms,
+        LivingArea = p.LivingArea,
+        DetailUrl = p.DetailUrl,
+        ListingStatus = p.ListingStatus,
+        Zestimate = p.Zestimate,
+        DaysOnZillow = p.DaysOnZillow,
+        Price = p.Price,
+        DateSoldTimestamp = p.DateSoldTimestamp
+    };
 }

@@ -14,7 +14,8 @@ public class RegisterViewModel
     public string ConfirmPassword { get; set; }
     
     [Required]
-    public string Name { get; set; }
+    [Display(Name = "Full Name")]
+    public string FullName { get; set; }
     
     public string CompanyName { get; set; }
 }

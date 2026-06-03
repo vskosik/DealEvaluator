@@ -25,9 +25,6 @@ public class MarketDataConfiguration : IEntityTypeConfiguration<MarketData>
             .IsRequired()
             .HasMaxLength(50);
 
-        builder.Property(x => x.RawJson)
-            .IsRequired();
-
         builder.Property(x => x.Keywords)
             .IsRequired(false)
             .HasDefaultValue("");
@@ -40,5 +37,10 @@ public class MarketDataConfiguration : IEntityTypeConfiguration<MarketData>
 
         builder.Property(x => x.ExpiresAt)
             .IsRequired(false);
+
+        builder.HasMany(x => x.Properties)
+            .WithOne()
+            .HasForeignKey(x => x.MarketDataId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

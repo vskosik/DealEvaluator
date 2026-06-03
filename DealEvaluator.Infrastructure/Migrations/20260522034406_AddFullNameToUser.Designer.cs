@@ -4,6 +4,7 @@ using DealEvaluator.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DealEvaluator.Web.Migrations
 {
     [DbContext(typeof(DealEvaluatorContext))]
-    partial class DealEvaluatorContextModelSnapshot : ModelSnapshot
+    [Migration("20260522034406_AddFullNameToUser")]
+    partial class AddFullNameToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,87 +24,6 @@ namespace DealEvaluator.Web.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("DealEvaluator.Domain.Entities.CachedProperty", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Address")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<float?>("Bathrooms")
-                        .HasColumnType("real");
-
-                    b.Property<int?>("Bedrooms")
-                        .HasColumnType("int");
-
-                    b.Property<string>("City")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<long?>("DateSoldTimestamp")
-                        .HasColumnType("bigint");
-
-                    b.Property<int?>("DaysOnZillow")
-                        .HasColumnType("int");
-
-                    b.Property<string>("DetailUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<double?>("Latitude")
-                        .HasColumnType("float");
-
-                    b.Property<string>("ListingStatus")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<int?>("LivingArea")
-                        .HasColumnType("int");
-
-                    b.Property<double?>("Longitude")
-                        .HasColumnType("float");
-
-                    b.Property<int>("MarketDataId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("Price")
-                        .HasColumnType("int");
-
-                    b.Property<string>("PropertyType")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("State")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<int?>("Zestimate")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ZipCode")
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
-
-                    b.Property<string>("Zpid")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MarketDataId");
-
-                    b.HasIndex("MarketDataId", "Zpid")
-                        .IsUnique();
-
-                    b.ToTable("CachedProperties");
-                });
 
             modelBuilder.Entity("DealEvaluator.Domain.Entities.Comparable", b =>
                 {
@@ -431,6 +353,10 @@ namespace DealEvaluator.Web.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("nvarchar(450)")
                         .HasDefaultValue("");
+
+                    b.Property<string>("RawJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Source")
                         .IsRequired()
@@ -858,15 +784,6 @@ namespace DealEvaluator.Web.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("DealEvaluator.Domain.Entities.CachedProperty", b =>
-                {
-                    b.HasOne("DealEvaluator.Domain.Entities.MarketData", null)
-                        .WithMany("Properties")
-                        .HasForeignKey("MarketDataId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("DealEvaluator.Domain.Entities.Comparable", b =>
                 {
                     b.HasOne("DealEvaluator.Domain.Entities.Property", null)
@@ -1028,11 +945,6 @@ namespace DealEvaluator.Web.Migrations
             modelBuilder.Entity("DealEvaluator.Domain.Entities.Lender", b =>
                 {
                     b.Navigation("Evaluations");
-                });
-
-            modelBuilder.Entity("DealEvaluator.Domain.Entities.MarketData", b =>
-                {
-                    b.Navigation("Properties");
                 });
 
             modelBuilder.Entity("DealEvaluator.Domain.Entities.RehabEstimate", b =>

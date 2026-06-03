@@ -13,6 +13,7 @@ public class DealEvaluatorContext : IdentityDbContext<User>
     public DbSet<Comparable> Comparables { get; set; }
     public DbSet<Evaluation> Evaluations { get; set; }
     public DbSet<MarketData> MarketData { get; set; }
+    public DbSet<CachedProperty> CachedProperties { get; set; }
     public DbSet<RehabEstimate> RehabEstimates { get; set; }
     public DbSet<RehabLineItem> RehabLineItems { get; set; }
     public DbSet<RehabCostTemplate> RehabCostTemplates { get; set; }
@@ -33,5 +34,6 @@ public class DealEvaluatorContext : IdentityDbContext<User>
         builder.ApplyConfiguration(new RehabCostTemplateConfiguration());
         builder.ApplyConfiguration(new DealSettingsConfiguration());
         builder.ApplyConfiguration(new LenderConfiguration());
+        builder.ApplyConfiguration(new CachedPropertyConfiguration());
     }
 }
