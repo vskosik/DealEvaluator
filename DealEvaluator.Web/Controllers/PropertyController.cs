@@ -75,15 +75,29 @@ public class PropertyController : BaseAuthorizedController
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            // Create property (includes automatic placeholder evaluation if repair cost provided)
-            var property = await PropertyService.CreatePropertyAsync(dto, userId);
+            // Create property (includes automatic evaluation when comps are found)
+            var result = await PropertyService.CreatePropertyAsync(dto, userId);
 
-            // Show success message
-            TempData["NotificationType"] = "success";
-            TempData["Notification"] = $"Property created and evaluated successfully!";
+            if (result.CompConfidence == CompConfidence.Insufficient || (result.CompConfidence != null && !result.EvaluationCreated))
+            {
+                TempData["NotificationType"] = "warning";
+                TempData["Notification"] = "Property created, but no automatic evaluation was possible. " +
+                                           (result.CompSearchNotes ?? "Not enough comparable sales found.") +
+                                           " You can add comparables and evaluate manually.";
+            }
+            else if (result.CompConfidence == CompConfidence.Low)
+            {
+                TempData["NotificationType"] = "warning";
+                TempData["Notification"] = "Property evaluated, but comp confidence is LOW (few or weak comparables). Review the comps before trusting the ARV.";
+            }
+            else
+            {
+                TempData["NotificationType"] = "success";
+                TempData["Notification"] = "Property created and evaluated successfully!";
+            }
 
             // Redirect to property details to show evaluation results
-            return RedirectToAction("Details", new { id = property.Id });
+            return RedirectToAction("Details", new { id = result.Property.Id });
         }
         catch (Exception ex)
         {

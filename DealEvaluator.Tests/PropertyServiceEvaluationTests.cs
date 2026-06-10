@@ -303,13 +303,14 @@ public class PropertyServiceEvaluationTests
 
     private sealed class NoopCompService : ICompService
     {
-        public Task<List<Application.DTOs.Zillow.ZillowProperty>> FindComparablesAsync(
+        public Task<Application.DTOs.Comparable.CompSearchResult> FindComparablesAsync(
             PropertyTypes propertyType,
             int? bedrooms,
-            int? bathrooms,
+            decimal? bathrooms,
             int? sqft,
             string zipCode,
-            string? subjectPropertyAddress = null)
+            string? subjectPropertyAddress = null,
+            string searchKeyword = "renovated")
         {
             throw new NotSupportedException("Comp service is not used in these CreateEvaluationAsync tests.");
         }

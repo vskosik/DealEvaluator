@@ -41,7 +41,7 @@ public class PropertyService : IPropertyService
         _httpClientFactory = httpClientFactory;
     }
 
-    public async Task<PropertyDto> CreatePropertyAsync(CreatePropertyDto dto, string userId)
+    public async Task<CreatePropertyResultDto> CreatePropertyAsync(CreatePropertyDto dto, string userId)
     {
         // Check if property already exists for this user at this address
         var existingProperty = await _propertyRepository
@@ -55,7 +55,10 @@ public class PropertyService : IPropertyService
             _propertyRepository.Update(existingProperty);
             await _propertyRepository.SaveChangesAsync();
 
-            return _mapper.Map<PropertyDto>(existingProperty);
+            return new CreatePropertyResultDto
+            {
+                Property = _mapper.Map<PropertyDto>(existingProperty)
+            };
         }
 
         // Create new property
@@ -72,12 +75,16 @@ public class PropertyService : IPropertyService
         await _propertyRepository.SaveChangesAsync();
 
         // Try to create automatic evaluation
+        CompConfidence? compConfidence = null;
+        string? compSearchNotes = null;
+        var evaluationCreated = false;
+
         try
         {
             var propertyAddress = $"{property.Address}, {property.City}, {property.State} {property.ZipCode}";
 
             // Try to find comparables automatically
-            var zillowComps = await _compService.FindComparablesAsync(
+            var compResult = await _compService.FindComparablesAsync(
                 property.PropertyType,
                 property.Bedrooms,
                 property.Bathrooms,
@@ -85,9 +92,24 @@ public class PropertyService : IPropertyService
                 property.ZipCode,
                 propertyAddress);
 
+            compConfidence = compResult.Confidence;
+            compSearchNotes = compResult.Notes;
+
+            if (compResult.Confidence == CompConfidence.Insufficient)
+            {
+                // No usable comps — skip the automatic evaluation; the user can
+                // add comparables and evaluate manually.
+                return new CreatePropertyResultDto
+                {
+                    Property = _mapper.Map<PropertyDto>(property),
+                    CompConfidence = compConfidence,
+                    CompSearchNotes = compSearchNotes
+                };
+            }
+
             // Save comparables first to get their IDs
             var comparableIds = new List<int>();
-            foreach (var zillowComp in zillowComps)
+            foreach (var zillowComp in compResult.Comparables.Select(c => c.Property))
             {
                 var addressParts = ParseZillowAddress(zillowComp.Address);
 
@@ -145,15 +167,21 @@ public class PropertyService : IPropertyService
             };
 
             await CreateEvaluationAsync(createEvaluationDto, userId);
+            evaluationCreated = true;
         }
         catch (InvalidOperationException)
         {
-            // If we can't find enough comparables, don't create an evaluation
-            // User can create one manually later
-            // Silently continue - property was still created successfully
+            // Evaluation creation failed (e.g., comps without valid prices).
+            // Property was still created successfully; user can evaluate manually.
         }
 
-        return _mapper.Map<PropertyDto>(property);
+        return new CreatePropertyResultDto
+        {
+            Property = _mapper.Map<PropertyDto>(property),
+            EvaluationCreated = evaluationCreated,
+            CompConfidence = compConfidence,
+            CompSearchNotes = compSearchNotes
+        };
     }
 
     public async Task<PropertyDto?> GetPropertyByIdAsync(int id)

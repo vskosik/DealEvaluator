@@ -11,12 +11,12 @@ namespace DealEvaluator.Application.Interfaces;
 public interface IPropertyService
 {
     /// <summary>
-    /// Creates a new property and performs initial evaluation
+    /// Creates a new property and attempts an automatic evaluation
     /// </summary>
     /// <param name="dto">Property data from user input</param>
     /// <param name="userId">ID of the user creating the property</param>
-    /// <returns>Created property with ID</returns>
-    Task<PropertyDto> CreatePropertyAsync(CreatePropertyDto dto, string userId);
+    /// <returns>Created property plus the outcome of the automatic comp search</returns>
+    Task<CreatePropertyResultDto> CreatePropertyAsync(CreatePropertyDto dto, string userId);
 
     /// <summary>
     /// Gets a property by ID
