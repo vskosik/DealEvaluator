@@ -112,10 +112,13 @@ public class MarketDataService : IMarketDataService
         LivingArea = p.LivingArea,
         DetailUrl = p.DetailUrl,
         ListingStatus = p.ListingStatus,
+        HomeStatus = p.HomeStatus,
         Zestimate = p.Zestimate,
         DaysOnZillow = p.DaysOnZillow,
         Price = p.Price,
-        DateSoldTimestamp = p.DateSoldTimestamp
+        DateSoldTimestamp = p.DateSoldTimestamp,
+        YearBuilt = p.YearBuilt,
+        LotSizeSqft = p.LotSizeSqft
     };
 
     private static ZillowProperty MapToZillowProperty(CachedProperty p) => new()
@@ -133,9 +136,12 @@ public class MarketDataService : IMarketDataService
         LivingArea = p.LivingArea,
         DetailUrl = p.DetailUrl,
         ListingStatus = p.ListingStatus,
+        HomeStatus = p.HomeStatus,
         Zestimate = p.Zestimate,
         DaysOnZillow = p.DaysOnZillow,
         Price = p.Price,
-        DateSoldTimestamp = p.DateSoldTimestamp
+        DateSoldTimestamp = p.DateSoldTimestamp,
+        YearBuilt = p.YearBuilt,
+        LotSizeSqft = p.LotSizeSqft
     };
 }

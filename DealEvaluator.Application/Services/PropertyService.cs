@@ -90,7 +90,9 @@ public class PropertyService : IPropertyService
                 property.Bathrooms,
                 property.Sqft,
                 property.ZipCode,
-                propertyAddress);
+                subjectPropertyAddress: propertyAddress,
+                subjectLatitude: property.Latitude,
+                subjectLongitude: property.Longitude);
 
             compConfidence = compResult.Confidence;
             compSearchNotes = compResult.Notes;

@@ -21,12 +21,17 @@ public class ZillowProperty
     public int? DaysOnZillow { get; set; }
     public int? Price { get; set; }
     public string ListingStatus { get; set; }
-    
+    public string? HomeStatus { get; set; }
+    public int? YearBuilt { get; set; }
+
+    [JsonPropertyName("lotAreaValue")]
+    public double? LotSizeSqft { get; set; }
+
     [JsonPropertyName("dateSold")]
     public long? DateSoldTimestamp { get; set; }
 
     [JsonIgnore]
-    public DateTime? DateSold => DateSoldTimestamp.HasValue 
-        ? DateTimeOffset.FromUnixTimeMilliseconds(DateSoldTimestamp.Value).DateTime 
+    public DateTime? DateSold => DateSoldTimestamp.HasValue
+        ? DateTimeOffset.FromUnixTimeMilliseconds(DateSoldTimestamp.Value).DateTime
         : null;
 }

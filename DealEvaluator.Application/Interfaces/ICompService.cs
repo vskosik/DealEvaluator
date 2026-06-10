@@ -20,7 +20,10 @@ public interface ICompService
     /// <param name="sqft">Square footage</param>
     /// <param name="zipCode">Zip code to search in</param>
     /// <param name="subjectPropertyAddress">Address of the subject property to exclude from results</param>
-    /// <param name="searchKeyword">Listing keyword used to fetch market data (e.g. "renovated")</param>
+    /// <param name="subjectZpid">Zillow property ID of the subject; when provided, used instead of address comparison</param>
+    /// <param name="searchKeyword">Optional keyword to filter the market data fetch (e.g. "renovated").
+    /// Defaults to empty — fetch all recently-sold properties of the given type rather than
+    /// narrowing to listings that mention the keyword in their description.</param>
     /// <returns>Scored comparables plus confidence grade and diagnostics</returns>
     Task<CompSearchResult> FindComparablesAsync(
         PropertyTypes propertyType,
@@ -29,5 +32,8 @@ public interface ICompService
         int? sqft,
         string zipCode,
         string? subjectPropertyAddress = null,
-        string searchKeyword = "renovated");
+        string? subjectZpid = null,
+        double? subjectLatitude = null,
+        double? subjectLongitude = null,
+        string searchKeyword = "");
 }

@@ -21,6 +21,7 @@ public class CachedPropertyConfiguration : IEntityTypeConfiguration<CachedProper
         builder.Property(x => x.ZipCode).HasMaxLength(10);
         builder.Property(x => x.DetailUrl).HasMaxLength(500);
         builder.Property(x => x.ListingStatus).HasMaxLength(50);
+        builder.Property(x => x.HomeStatus).HasMaxLength(50);
 
         builder.Ignore(x => x.DateSold);
 

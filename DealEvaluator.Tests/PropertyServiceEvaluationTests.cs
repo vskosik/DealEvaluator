@@ -310,7 +310,10 @@ public class PropertyServiceEvaluationTests
             int? sqft,
             string zipCode,
             string? subjectPropertyAddress = null,
-            string searchKeyword = "renovated")
+            string? subjectZpid = null,
+            double? subjectLatitude = null,
+            double? subjectLongitude = null,
+            string searchKeyword = "")
         {
             throw new NotSupportedException("Comp service is not used in these CreateEvaluationAsync tests.");
         }

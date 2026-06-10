@@ -24,6 +24,9 @@ public class CachedProperty
     public int? DaysOnZillow { get; set; }
     public int? Price { get; set; }
     public long? DateSoldTimestamp { get; set; }
+    public string? HomeStatus { get; set; }
+    public int? YearBuilt { get; set; }
+    public double? LotSizeSqft { get; set; }
 
     [NotMapped]
     public DateTime? DateSold => DateSoldTimestamp.HasValue

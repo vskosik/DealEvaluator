@@ -13,5 +13,8 @@ public class ScoredComparable
     public decimal? SqftScore { get; init; }
     public decimal? BedScore { get; init; }
     public decimal? BathScore { get; init; }
+    public decimal? RecencyScore { get; init; }
+    public decimal? DistanceScore { get; init; }
+    public decimal? DistanceMiles { get; init; }
     public bool HasMissingData { get; init; }
 }

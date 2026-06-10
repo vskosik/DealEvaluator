@@ -25,13 +25,26 @@ public class CompService : ICompService
     private const int MaxBedDeviation = 2;            // ±2 beds
     private const decimal MaxBathDeviation = 2.0m;    // ±2 baths
 
-    // Scoring weights (renormalized over available dimensions per property).
-    private const decimal WeightSqft = 0.50m;
-    private const decimal WeightBeds = 0.30m;
-    private const decimal WeightBaths = 0.20m;
+    // Scoring weights (renormalized over available dimensions per candidate).
+    // Dimensions with null target or null candidate data are dropped and
+    // remaining weights are renormalized, so a missing dimension redistributes
+    // its weight rather than zeroing the score.
+    private const decimal WeightSqft = 0.35m;
+    private const decimal WeightBeds = 0.20m;
+    private const decimal WeightBaths = 0.10m;
+    private const decimal WeightRecency = 0.25m;
+    private const decimal WeightDistance = 0.10m;
 
-    // A missing dimension scores this instead of silently passing.
+    // A candidate with known-but-missing data on a dimension (e.g. no lat/long
+    // while the subject has coordinates) scores this instead of being excluded.
     private const decimal MissingDataScore = 0.25m;
+
+    // Recency: linear decay from 1.0 (just sold) to 0.0 at MaxRecencyMonths.
+    // Beyond that the score floors at 0 (not excluded — hard gates don't apply).
+    private const decimal MaxRecencyMonths = 24m;
+
+    // Distance: linear decay from 1.0 (same location) to 0.0 at MaxDistanceMiles.
+    private const decimal MaxDistanceMiles = 2.0m;
 
     // Outlier trim: drop comps whose $/sqft deviates from the pool median
     // by more than this many median-absolute-deviations.
@@ -60,7 +73,10 @@ public class CompService : ICompService
         int? sqft,
         string zipCode,
         string? subjectPropertyAddress = null,
-        string searchKeyword = "renovated")
+        string? subjectZpid = null,
+        double? subjectLatitude = null,
+        double? subjectLongitude = null,
+        string searchKeyword = "")
     {
         _logger.LogInformation(
             "Finding comparables for {PropertyType} {Beds}bd/{Baths}ba {Sqft}sqft in {ZipCode}",
@@ -80,7 +96,7 @@ public class CompService : ICompService
         }
 
         // ---- 1. Pre-filter: type match, valid price, exclude subject -------
-        var candidates = PreFilter(marketData, propertyType, subjectPropertyAddress);
+        var candidates = PreFilter(marketData, propertyType, subjectPropertyAddress, subjectZpid);
 
         if (candidates.Count == 0)
         {
@@ -93,8 +109,9 @@ public class CompService : ICompService
         }
 
         // ---- 2. Score every candidate, apply hard gates ---------------------
+        var now = DateTime.UtcNow;
         var scored = candidates
-            .Select(p => ScoreCandidate(p, bedrooms, bathrooms, sqft))
+            .Select(p => ScoreCandidate(p, bedrooms, bathrooms, sqft, subjectLatitude, subjectLongitude, now))
             .Where(s => s != null)
             .Cast<ScoredComparable>()
             .OrderByDescending(s => s.Score)
@@ -138,7 +155,8 @@ public class CompService : ICompService
     private List<ZillowProperty> PreFilter(
         List<ZillowProperty> properties,
         PropertyTypes propertyType,
-        string? subjectAddress)
+        string? subjectAddress,
+        string? subjectZpid)
     {
         var targetType = MapPropertyTypeToZillowType(propertyType);
         var normalizedSubject = NormalizeAddress(subjectAddress);
@@ -147,21 +165,35 @@ public class CompService : ICompService
                 p.PropertyType != null &&
                 p.PropertyType.Equals(targetType, StringComparison.OrdinalIgnoreCase) &&
                 p.Price is > 0 &&
-                !IsSameAddress(NormalizeAddress(p.Address), normalizedSubject))
+                !IsSubjectProperty(p, subjectZpid, normalizedSubject))
             .ToList();
+    }
+
+    private static bool IsSubjectProperty(ZillowProperty p, string? subjectZpid, string? normalizedSubjectAddress)
+    {
+        if (subjectZpid != null && p.Id != null)
+            return string.Equals(p.Id, subjectZpid, StringComparison.OrdinalIgnoreCase);
+
+        return IsSameAddress(NormalizeAddress(p.Address), normalizedSubjectAddress);
     }
 
     /// <summary>
     /// Scores a candidate 0..1 against the subject. Returns null if a hard gate
-    /// fails. Missing data on a dimension scores low instead of passing free.
+    /// fails. Missing data on a known dimension scores low; unknown target
+    /// dimensions are dropped and weight redistributes to the rest.
     /// </summary>
     private ScoredComparable? ScoreCandidate(
-        ZillowProperty p, int? targetBeds, decimal? targetBaths, int? targetSqft)
+        ZillowProperty p,
+        int? targetBeds, decimal? targetBaths, int? targetSqft,
+        double? subjectLat, double? subjectLon,
+        DateTime now)
     {
         decimal? sqftScore = null, bedScore = null, bathScore = null;
+        decimal? recencyScore = null, distanceScore = null;
+        decimal? distanceMiles = null;
         bool hasMissingData = false;
 
-        // Sqft
+        // ---- Sqft -----------------------------------------------------------
         if (targetSqft.HasValue)
         {
             if (p.LivingArea.HasValue)
@@ -178,7 +210,7 @@ public class CompService : ICompService
             }
         }
 
-        // Beds
+        // ---- Beds -----------------------------------------------------------
         if (targetBeds.HasValue)
         {
             if (p.Bedrooms.HasValue)
@@ -194,7 +226,7 @@ public class CompService : ICompService
             }
         }
 
-        // Baths (fractional — Zillow reports 1.5, 2.5, etc.)
+        // ---- Baths (fractional — Zillow reports 1.5, 2.5, etc.) ------------
         if (targetBaths.HasValue)
         {
             if (p.Bathrooms.HasValue)
@@ -216,12 +248,44 @@ public class CompService : ICompService
             }
         }
 
-        // Weighted average over the dimensions that were actually requested,
-        // renormalizing weights so a null target doesn't drag the score down.
+        // ---- Recency --------------------------------------------------------
+        // DateSold null → skip dimension (weight redistributes); the Zillow API
+        // returns RecentlySold so most candidates will have this field.
+        if (p.DateSold.HasValue)
+        {
+            var ageMonths = (decimal)(now - p.DateSold.Value).TotalDays / 30.44m;
+            recencyScore = Math.Max(0m, 1m - ageMonths / MaxRecencyMonths);
+        }
+        // else: recencyScore stays null → weight redistributes
+
+        // ---- Distance -------------------------------------------------------
+        // Only scored when the subject has coordinates. If subject coords are
+        // null we skip the whole dimension for all candidates equally.
+        if (subjectLat.HasValue && subjectLon.HasValue)
+        {
+            if (p.Latitude.HasValue && p.Longitude.HasValue)
+            {
+                distanceMiles = HaversineDistanceMiles(
+                    subjectLat.Value, subjectLon.Value,
+                    p.Latitude.Value, p.Longitude.Value);
+                distanceScore = Math.Max(0m, 1m - distanceMiles.Value / MaxDistanceMiles);
+            }
+            else
+            {
+                distanceScore = MissingDataScore;
+                hasMissingData = true;
+            }
+        }
+
+        // ---- Weighted average -----------------------------------------------
+        // Only dimensions with a non-null score contribute; weights renormalize
+        // over whatever subset is available.
         decimal weightedSum = 0m, weightTotal = 0m;
-        if (sqftScore.HasValue) { weightedSum += sqftScore.Value * WeightSqft; weightTotal += WeightSqft; }
-        if (bedScore.HasValue)  { weightedSum += bedScore.Value * WeightBeds;  weightTotal += WeightBeds; }
-        if (bathScore.HasValue) { weightedSum += bathScore.Value * WeightBaths; weightTotal += WeightBaths; }
+        if (sqftScore.HasValue)     { weightedSum += sqftScore.Value     * WeightSqft;     weightTotal += WeightSqft; }
+        if (bedScore.HasValue)      { weightedSum += bedScore.Value      * WeightBeds;      weightTotal += WeightBeds; }
+        if (bathScore.HasValue)     { weightedSum += bathScore.Value     * WeightBaths;     weightTotal += WeightBaths; }
+        if (recencyScore.HasValue)  { weightedSum += recencyScore.Value  * WeightRecency;  weightTotal += WeightRecency; }
+        if (distanceScore.HasValue) { weightedSum += distanceScore.Value * WeightDistance; weightTotal += WeightDistance; }
 
         var score = weightTotal > 0 ? weightedSum / weightTotal : 0.5m;
 
@@ -232,6 +296,9 @@ public class CompService : ICompService
             SqftScore = sqftScore,
             BedScore = bedScore,
             BathScore = bathScore,
+            RecencyScore = recencyScore,
+            DistanceScore = distanceScore,
+            DistanceMiles = distanceMiles.HasValue ? Math.Round(distanceMiles.Value, 2) : null,
             HasMissingData = hasMissingData
         };
     }
@@ -336,6 +403,19 @@ public class CompService : ICompService
         // Prefix match handles "123 MAIN ST" vs "123 MAIN ST NEWARK NJ 07102".
         return a == b || a.StartsWith(b + " ") || b.StartsWith(a + " ");
     }
+
+    private static decimal HaversineDistanceMiles(double lat1, double lon1, double lat2, double lon2)
+    {
+        const double R = 3958.8; // Earth radius in miles
+        var dLat = ToRadians(lat2 - lat1);
+        var dLon = ToRadians(lon2 - lon1);
+        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2)
+                + Math.Cos(ToRadians(lat1)) * Math.Cos(ToRadians(lat2))
+                * Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+        return (decimal)(R * 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a)));
+    }
+
+    private static double ToRadians(double degrees) => degrees * Math.PI / 180.0;
 
     private static string MapPropertyTypeToZillowType(PropertyTypes propertyType)
     {
